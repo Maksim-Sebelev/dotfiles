@@ -1,0 +1,1 @@
+../../../../.general/shojiwm/src/window-animation.ts
