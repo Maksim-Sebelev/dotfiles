@@ -7,6 +7,9 @@ CONFIGS=(
   "hypr-winter"
 )
 
+dotfiles_dir="$(dirname $0)"
+echo "$dotfiles_dir"
+
 function help
 {
   echo "Usage: $(basename "$0") <config>"
@@ -17,6 +20,23 @@ function help
   done
   echo
   echo "  - help, h, -h, --help    Show this message"
+}
+
+function shojiwm_rain_action
+{
+  echo "[config-switch] switching to: hypr-winter"
+  cd "$dotfiles_dir"
+  stow -R shojiwm-rain
+  echo "[reloading] don't forget about reloading (Super+Shift+R)"
+}
+
+function hypr_winter_action
+{
+  echo "[config-switch] switching to: hypr-winter"
+  echo "Not implemented now"
+  # cd "$dotfiles_dir"
+  # stow -R hypr-winter
+  echo "[reloading] don't forget about reloading"
 }
 
 if [ $# -ne 1 ]; then
@@ -33,15 +53,11 @@ case "$ARG" in
     ;;
 
   shojiwm-rain)
-    echo "[config-switch] switching to: shojiwm-rain"
-    cd ~/dotfiles
-    stow -R shojiwm-rain
+    shojiwm_rain_action
     ;;
 
   hypr-winter)
-    echo "[config-switch] switching to: hypr-winter"
-    cd ~/dotfiles
-    stow -R hypr-winter
+    hypr_winter_action
     ;;
 
   *)
@@ -52,4 +68,4 @@ case "$ARG" in
     ;;
 esac
 
-echo "[apply-setup] done. don't forget about target-depended reloading!"
+echo "[apply-setup] done"

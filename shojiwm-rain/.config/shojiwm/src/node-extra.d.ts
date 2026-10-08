@@ -1,1 +1,0 @@
-../../../../.general/shojiwm/src/node-extra.d.ts

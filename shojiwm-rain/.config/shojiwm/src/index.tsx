@@ -27,7 +27,7 @@ import {
 } from "shoji_wm";
 import type { CompositionRenderable, ManagedWindowRect } from "shoji_wm/types";
 import { createIpcServer } from "shoji_wm/ipc";
-import { rainWindowWallpaperEffect, rainWindowWindowEffect, disposeRain } from "./rain";
+import { rainWindowWallpaperEffect, rainWindowWindowEffect, disposeRain } from "./settings/rain";
 import {
   HybridWindowManager,
   TITLEBAR_HEIGHT,
@@ -42,7 +42,7 @@ import {
   WINDOW_STATE_WORKSPACE_VISIBLE,
   WINDOW_STATE_WORKSPACE_OFFSET_Y,
   WINDOW_STATE_WORKSPACE_OPACITY,
-} from "./window-manager";
+} from "./settings/window-manager";
 
 COMPOSITOR.env.apply({
   QT_QPA_PLATFORM: "wayland;xcb",
@@ -87,8 +87,8 @@ COMPOSITOR.onDisable((event) => {
     const snapshot = HYBRID_WINDOW_MANAGER.snapshot();
     event.persist(HOT_RELOAD_WINDOW_MANAGER_STATE, snapshot);
   }
-  // Останавливаем полл дождя, чтобы при hot reload не осталось висящего таймера.
   disposeRain();
+  // disposeRecording();
   HYBRID_WINDOW_MANAGER.dispose();
 });
 
@@ -276,19 +276,25 @@ COMPOSITOR.onDisable(() => {
 // ---------------------------------------------------------------------------
 // Startup application launching
 // ---------------------------------------------------------------------------
-import { configureStartupApplications } from "./startup";
+import { configureStartupApplications } from "./settings/startup";
 configureStartupApplications();
 // ---------------------------------------------------------------------------
 // cliphist
 // ---------------------------------------------------------------------------
-import { initCliphist } from "./cliphist";
+import { initCliphist } from "./settings/cliphist";
 initCliphist();
 // ---------------------------------------------------------------------------
 // Key bindings
 // ---------------------------------------------------------------------------
-import { registerBinds } from "./binds";
+import { registerBinds } from "./settings/binds";
 registerBinds(HYBRID_WINDOW_MANAGER, scheduleWorkspaceBroadcast);
 // ---------------------------------------------------------------------------
+import { recordingOverlayEffect, toggleRecording, disposeRecording } from "./settings/recording.ts";
+COMPOSITOR.effect.overlay = (output, options) => {
+  const effect = recordingOverlayEffect(output);
+  if (!effect) return null;
+  return { replace: effect };
+};
 
 COMPOSITOR.output.configure((context) => {
   const display: DisplayConfigDraft = {};
@@ -344,7 +350,7 @@ COMPOSITOR.output.configure((context) => {
 // ---------------------------------------------------------------------------
 // Input devices
 // ---------------------------------------------------------------------------
-import { initInput } from "./input"
+import { initInput } from "./settings/input"
 initInput(HYBRID_WINDOW_MANAGER);
 
 // ---------------------------------------------------------------------------
@@ -357,7 +363,7 @@ const LAYER_BLUR_MASK = compileLayerEffect({
   alpha: "preserve",
   pipeline: [
     dualKawaseBlur({ radius: 4, passes: 2 }),
-    shaderStage(loadShader("./layer-blur-mask.frag"), {
+    shaderStage(loadShader("./shaders/common/layer-blur-mask.frag"), {
       textures: {
         layer_mask: layerSource(),
       },
@@ -401,7 +407,7 @@ COMPOSITOR.event.onInitialConfigure((window) => {
 });
 
 
-import { maybeMoveStartupWindow } from "./startup";
+import { maybeMoveStartupWindow } from "./settings/startup";
 COMPOSITOR.event.onFirstCommit((window) => {
   HYBRID_WINDOW_MANAGER.onFirstCommit(window);
   // waterTrackWindow(window);

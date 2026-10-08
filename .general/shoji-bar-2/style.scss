@@ -1,0 +1,2120 @@
+$bg-color: #15151570;
+$bg-up-color: #2b2b2b;
+$accent-color: #88cddd;
+$text-active-color: #f5f5f5;
+$text-active-black-color: #000000;
+$text-inactive-color: #c0c0c0;
+$pressed-button-color: #c0c0c0;
+
+// Look and animation of a single notification row (NotifRow). Made a mixin so
+// the StatusMenu notification list and NotifPopup share the same appearance.
+@mixin notif-row {
+  NotifRow {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin: 2px 0;
+    opacity: 1;
+    transform: translateX(0);
+    transition:
+      transform 500ms cubic-bezier(0.1, 1.1, 0.1, 1.1),
+      opacity 500ms cubic-bezier(0.1, 1.1, 0.1, 1.1);
+
+    NotifRowTop {
+      NotifIcon {
+        background: #2a2a2a;
+        border-radius: 6px;
+      }
+
+      // Transparent spacer when there is no image / icon
+      NotifIcon.NotifIconEmpty {
+        background: transparent;
+      }
+
+      NotifRowText {
+        NotifAppName {
+          color: $text-inactive-color;
+          font-size: 11px;
+          font-weight: bold;
+        }
+
+        NotifAge {
+          color: $text-inactive-color;
+          font-size: 10px;
+        }
+
+        NotifSummary {
+          color: $text-active-color;
+          font-size: 13px;
+          margin-top: 1px;
+        }
+
+        NotifBody {
+          color: $text-inactive-color;
+          font-size: 11px;
+          margin-top: 1px;
+        }
+      }
+
+      NotifCloseButton {
+        background: transparent;
+        border-radius: 999px;
+        min-width: 20px;
+        min-height: 20px;
+        padding: 0;
+        color: $text-inactive-color;
+        font-size: 14px;
+      }
+
+      NotifCloseButton:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: $text-active-color;
+      }
+    }
+
+    NotifActions {
+      margin-top: 2px;
+
+      NotifActionButton {
+        background: #3a3a3a;
+        color: $text-active-color;
+        border-radius: 6px;
+        padding: 4px 12px;
+        min-height: 0;
+        font-size: 11px;
+      }
+
+      NotifActionButton:hover {
+        background: #4a4a4a;
+      }
+    }
+  }
+
+  // Notification enter / exit animation.
+  // - entering: slides in from 32px to the right and fades in
+  // - leaving:  slides out to 48px right and fades out (faster easing)
+  // Runs in series with the Revealer's SLIDE_DOWN, in a separate phase from the
+  // height collapse.
+  NotifRow.entering {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+
+  NotifRow.leaving {
+    opacity: 0;
+    transform: translateX(48px);
+    transition:
+      transform 500ms cubic-bezier(0.3, -0.3, 0, 1),
+      opacity 500ms cubic-bezier(0.3, -0.3, 0, 1);
+  }
+
+  // Only notifications with a default action brighten slightly on hover to
+  // indicate they are clickable.
+  NotifRow.clickable:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+window.Bar {
+  background: transparent;
+  color: transparent;
+
+  parentbox {
+    background: $bg-color;
+    padding: 3px;
+  }
+
+  // Consistent with the other bar buttons: normally transparent + white icon,
+  // when pressed (menu open) accent background + black icon (the white/black
+  // icon swap is done in StartMenu.tsx).
+  StartMenuButton {
+    border-radius: 8px;
+    min-width: 26px;
+    min-height: 26px;
+    background: transparent;
+  }
+
+  StartMenuButton:hover {
+    background: #2a2a2a50;
+  }
+
+  StartMenuButton.pressed {
+    background: $accent-color;
+  }
+
+  StartMenuButton.pressed:hover {
+    background: $accent-color;
+  }
+
+  ClockButton {
+    border-radius: 8px;
+    min-height: 26px;
+    padding: 0 12px;
+    background: transparent;
+
+    ClockButtonLabel {
+      color: $text-active-color;
+      font-size: 13px;
+      font-feature-settings: "tnum";
+    }
+  }
+
+  ClockButton:hover {
+    background: #2a2a2a50;
+  }
+
+  ClockButton.pressed {
+    background: $accent-color;
+
+    ClockButtonLabel {
+      color: $text-active-black-color;
+    }
+  }
+
+  LayoutMode {
+    margin-left: 16px;
+    padding: 0 8px;
+    min-height: 26px;
+    border-radius: 8px;
+    background: transparent;
+
+    LayoutModeIcon {
+      margin-right: 6px;
+    }
+
+    LayoutModeLabel {
+      color: $text-active-color;
+      font-family: monospace;
+      font-size: 13px;
+    }
+  }
+
+  LayoutMode:hover {
+    background: #2a2a2a50;
+  }
+
+  Workspaces {
+    margin-left: 16px;
+
+    Workspace {
+      min-width: 22px;
+      min-height: 22px;
+      margin: 2px;
+      padding: 0;
+      border-radius: 6px;
+      border-style: solid;
+      border-width: 1px;
+      border-color: transparent;
+      background: #2a2a2a50;
+
+      WorkspaceLabel {
+        color: $text-inactive-color;
+        font-size: 12px;
+        font-feature-settings: "tnum";
+        margin-left: 0.5px;
+      }
+    }
+
+    // Workspaces that have windows are slightly brighter
+    Workspace.occupied {
+      WorkspaceLabel {
+        color: $text-active-color;
+      }
+    }
+
+    Workspace:hover {
+      background: #dcdcdc50;
+    }
+
+    // Current workspace
+    Workspace.active {
+      background: transparent;
+      border-color: #c0c0c0;
+
+      WorkspaceLabel {
+        color: $text-active-color;
+      }
+    }
+
+    Workspace.active:hover {
+      background: #dcdcdc50;
+    }
+  }
+
+  WallpaperButton {
+    border-radius: 8px;
+    min-width: 26px;
+    min-height: 26px;
+    padding: 0 6px;
+    background: transparent;
+
+    WallpaperButtonIcon {
+      -gtk-icon-size: 16px;
+    }
+  }
+
+  WallpaperButton:hover {
+    background: #2a2a2a50;
+  }
+
+  WallpaperButton.pressed {
+    background: $accent-color;
+  }
+
+  // System tray. Wrapped in a gray semi-transparent rounded box so it reads as
+  // a tray. When there are 0 items, SystemTray.tsx sets visible=false.
+  SystemTray {
+    background: rgba(192, 192, 192, 0.14);
+    border-radius: 9px;
+    padding: 1px 3px;
+    margin-right: 6px;
+
+    SystemTrayItem {
+      background: transparent;
+      border-radius: 6px;
+      min-width: 24px;
+      min-height: 24px;
+      padding: 0 3px;
+      margin: 0 1px;
+
+      SystemTrayIcon {
+        // window.Bar has color: transparent, which would make symbolic icons
+        // (e.g. input-keyboard-symbolic) transparent. Set the color explicitly.
+        color: $text-active-color;
+        -gtk-icon-size: 16px;
+      }
+    }
+
+    SystemTrayItem:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    SystemTrayItem:active {
+      background: rgba(255, 255, 255, 0.18);
+    }
+  }
+
+  // Battery indicator. Matches the look of the other bar buttons.
+  // When not present, Battery.tsx hides it via visible={batteryPresent}.
+  BatteryButton {
+    border-radius: 8px;
+    min-height: 26px;
+    padding: 0 8px;
+    background: transparent;
+    margin-right: 2px;
+
+    BatteryRow {
+      BatteryIcon {
+        -gtk-icon-size: 14px;
+      }
+
+      BatteryPercent {
+        color: $text-active-color;
+        font-family: monospace;
+        font-size: 12px;
+        font-feature-settings: "tnum";
+      }
+    }
+  }
+
+  // A menubutton holds an internal GtkToggleButton with its own background /
+  // border / box-shadow, so flatten those out (same approach as PowerButton).
+  BatteryButton > * {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    min-height: 0;
+    outline: none;
+  }
+
+  // Remove the focus ring (outline + box-shadow) shown after a click / on
+  // focus. GTK4's :focus-visible also applies right after keyboard navigation,
+  // so cover both.
+  BatteryButton:focus,
+  BatteryButton:focus-visible,
+  BatteryButton:focus-within,
+  BatteryButton > *:focus,
+  BatteryButton > *:focus-visible,
+  BatteryButton > *:focus-within {
+    outline: none;
+    box-shadow: none;
+    border: none;
+  }
+
+  BatteryButton:hover {
+    background: #2a2a2a50;
+  }
+
+  // While the popover is open (Battery.tsx adds the pressed class) use an
+  // accent background + black label. The icon is swapped to -dark in the TSX.
+  BatteryButton.pressed {
+    background: $accent-color;
+
+    BatteryRow BatteryPercent {
+      color: $text-active-black-color;
+    }
+  }
+
+  // CPU / memory indicators. Same look as the battery button; shared by both.
+  UsageButton {
+    border-radius: 8px;
+    min-height: 26px;
+    padding: 0 8px;
+    background: transparent;
+    margin-right: 2px;
+
+    UsageRow {
+      UsageIcon {
+        -gtk-icon-size: 14px;
+      }
+
+      UsagePercent {
+        color: $text-active-color;
+        font-family: monospace;
+        font-size: 12px;
+        font-feature-settings: "tnum";
+      }
+    }
+  }
+
+  UsageButton > * {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    min-height: 0;
+    outline: none;
+  }
+
+  UsageButton:focus,
+  UsageButton:focus-visible,
+  UsageButton:focus-within,
+  UsageButton > *:focus,
+  UsageButton > *:focus-visible,
+  UsageButton > *:focus-within {
+    outline: none;
+    box-shadow: none;
+    border: none;
+  }
+
+  UsageButton:hover {
+    background: #2a2a2a50;
+  }
+
+  UsageButton.pressed {
+    background: $accent-color;
+
+    UsageRow UsagePercent {
+      color: $text-active-black-color;
+    }
+  }
+}
+
+window.WallpaperBackground {
+  background: $bg-color;
+
+  WallpaperBackgroundPicture {
+    background: $bg-color;
+  }
+}
+
+window.WallpaperMenuLayer {
+  background: transparent;
+  color: $text-active-color;
+
+  // Fix the height (560px) so open/close are symmetric at the real size
+  // (same as ClockMenu).
+  WallpaperMenu {
+    background: $bg-color;
+    // Concentric with the inner island (radius 10 + margin 10): 10 + 10 = 20
+    border-radius: 20px;
+    min-width: 560px;
+    min-height: 560px;
+    transform: translateY(-560px);
+  }
+
+  WallpaperMenu.open {
+    transform: translateY(-16px);
+    transition: transform 500ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  WallpaperMenu.close {
+    transform: translateY(-560px);
+    transition: transform 500ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  FirstPadding {
+    min-height: 10px;
+  }
+
+  // Top island: directory
+  WallpaperDirIsland {
+    background: $bg-up-color;
+    border-radius: 10px;
+    margin: 10px 10px 0 10px;
+    padding: 10px 12px;
+
+    WallpaperDirInfo {
+      WallpaperDirCaption {
+        color: $text-inactive-color;
+        font-size: 11px;
+      }
+
+      WallpaperDirPath {
+        color: $text-active-color;
+        font-size: 13px;
+        font-family: monospace;
+        margin-top: 2px;
+      }
+    }
+
+    WallpaperDirButton {
+      background: #4a4a4a;
+      color: $text-active-color;
+      border-radius: 6px;
+      padding: 6px 12px;
+      min-height: 0;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
+    WallpaperDirButton:hover {
+      background: #5a5a5a50;
+    }
+  }
+
+  // Middle island: thumbnail list
+  WallpaperGridScroll {
+    background: $bg-up-color;
+    border-radius: 10px;
+    margin: 10px;
+    padding: 10px;
+
+    WallpaperGrid {
+      background: transparent;
+
+      WallpaperThumbnail {
+        background: transparent;
+        border-radius: 8px;
+        padding: 3px;
+        min-height: 0;
+
+        WallpaperThumbnailImage {
+          background: #3a3a3a;
+          border-radius: 6px;
+        }
+      }
+
+      WallpaperThumbnail:hover {
+        background: #525252;
+      }
+
+      WallpaperThumbnail.selected {
+        background: $accent-color;
+      }
+    }
+
+    // Scrollbar (same as StartMenu)
+    scrollbar {
+      background: transparent;
+      margin: 2px;
+
+      trough {
+        background: transparent;
+        border-radius: 8px;
+        min-width: 6px;
+      }
+
+      slider {
+        background: #5a5a5a;
+        border-radius: 8px;
+        min-width: 6px;
+        min-height: 30px;
+        transition: background 150ms ease;
+      }
+
+      slider:hover {
+        background: #7a7a7a;
+      }
+
+      slider:active {
+        background: $accent-color;
+      }
+    }
+
+    scrollbar.overlay-indicator:not(.hovering) slider {
+      background: #5a5a5a;
+      min-width: 4px;
+    }
+  }
+
+  // Bottom island: scope + clear override
+  WallpaperControlIsland {
+    background: $bg-up-color;
+    border-radius: 10px;
+    margin: 0 10px 10px 10px;
+    padding: 10px;
+
+    WallpaperModeToggle {
+      WallpaperModeButton {
+        background: #3a3a3a;
+        color: $text-active-color;
+        border-radius: 6px;
+        padding: 6px 12px;
+        margin-right: 6px;
+        min-height: 0;
+        font-size: 12px;
+      }
+
+      WallpaperModeButton:hover {
+        background: #525252;
+      }
+
+      WallpaperModeButton.active {
+        background: $accent-color;
+        color: $text-active-black-color;
+      }
+    }
+
+    WallpaperIdentifyButton {
+      background: #3a3a3a;
+      color: $text-active-color;
+      border-radius: 6px;
+      padding: 6px 12px;
+      margin-right: 6px;
+      min-height: 0;
+      font-size: 12px;
+    }
+
+    WallpaperIdentifyButton:hover {
+      background: #525252;
+    }
+
+    WallpaperClearButton {
+      background: #3a3a3a;
+      color: $text-active-color;
+      border-radius: 6px;
+      padding: 6px 12px;
+      min-height: 0;
+      font-size: 12px;
+    }
+
+    WallpaperClearButton:hover {
+      background: #525252;
+    }
+
+    WallpaperClearButton:disabled {
+      background: transparent;
+      color: rgba(245, 245, 245, 0.3);
+    }
+  }
+}
+
+// =============================================================================
+// Dock (macOS-style)
+// =============================================================================
+window.DockLayer {
+  background: transparent;
+  color: $text-active-color;
+
+  // The dock body, stuck to the bottom of the screen.
+  // The 12px gap from the bottom is taken with marginBottom (layer-shell
+  // margin). A CSS margin would become a transparent area inside the surface
+  // and would swallow clicks.
+  DockBar {
+    background: $bg-color;
+    border-radius: 11px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 2px 2px;
+
+    // Initial / closed state (tucked below, out of view)
+    transform: translateY(120px);
+    opacity: 0;
+  }
+
+  DockBar.open {
+    transform: translateY(0);
+    opacity: 1;
+    transition:
+      transform 320ms cubic-bezier(0.1, 0.9, 0.2, 1),
+      opacity 200ms ease;
+  }
+
+  DockBar.close {
+    transform: translateY(120px);
+    opacity: 0;
+    transition:
+      transform 320ms cubic-bezier(0.4, 0, 0.6, 1),
+      opacity 200ms ease;
+  }
+
+  // One app's icon
+  DockItem {
+    background: transparent;
+    border-radius: 8px;
+    padding: 2px;
+    min-width: 42px;
+    min-height: 48px;
+
+    DockItemBox {
+      DockItemIcon {
+        margin: 1px 0 0 0;
+      }
+
+      DockItemIndicator {
+        min-height: 4px;
+        margin-top: 2px;
+
+        DockItemDot {
+          min-width: 3px;
+          min-height: 3px;
+          border-radius: 2px;
+          background: $text-inactive-color;
+        }
+
+        DockItemDotMore {
+          min-width: 6px;
+          min-height: 3px;
+          border-radius: 2px;
+          background: $text-inactive-color;
+        }
+      }
+    }
+  }
+
+  DockItem:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  DockItem:active {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  DockItem.focused {
+    DockItemBox DockItemIndicator {
+      DockItemDot,
+      DockItemDotMore {
+        background: $accent-color;
+      }
+    }
+  }
+}
+
+// Contents of the right-click popover
+popover.background.DockPopover,
+popover contents {
+  background: $bg-up-color;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 4px;
+  color: $text-active-color;
+}
+
+// System tray dbusmenu popover. Overrides the global theme and matches the
+// callout triangle (arrow) to the surrounding color.
+popover.SystemTrayPopover {
+  background: transparent;
+
+  > arrow {
+    background: $bg-color;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  > contents {
+    background: $bg-color;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 4px;
+    color: $text-active-color;
+  }
+
+  modelbutton {
+    border-radius: 6px;
+    padding: 6px 10px;
+    min-height: 0;
+    color: $text-active-color;
+
+    label {
+      color: $text-active-color;
+    }
+  }
+
+  modelbutton:hover {
+    background: $accent-color;
+    color: $bg-color;
+
+    label {
+      color: $text-active-black-color;
+    }
+  }
+
+  // Override the global theme for the radio / check indicators too.
+  // Remove the theme-dependent dot/check images; when selected, use a solid
+  // accent fill.
+  check,
+  radio {
+    min-width: 14px;
+    min-height: 14px;
+    margin-right: 8px;
+    -gtk-icon-source: none;
+    background-image: none;
+    background-color: #3a3a3a;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow: none;
+    color: transparent;
+  }
+
+  radio {
+    border-radius: 100%;
+  }
+
+  check {
+    border-radius: 4px;
+  }
+
+  check:checked,
+  check:indeterminate,
+  radio:checked {
+    background-color: $accent-color;
+    border-color: $accent-color;
+  }
+
+  // On a hover row (accent background), darken the selected indicator so it
+  // does not blend in.
+  modelbutton:hover {
+    check:checked,
+    check:indeterminate,
+    radio:checked {
+      background-color: $bg-color;
+      border-color: $bg-color;
+    }
+
+    check,
+    radio {
+      border-color: rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  separator {
+    background: rgba(255, 255, 255, 0.08);
+    min-height: 1px;
+    margin: 4px 6px;
+  }
+}
+
+DockPopover {
+  background: transparent;
+  padding: 0;
+  min-width: 240px;
+
+  DockPopoverRow {
+    background: transparent;
+    border-radius: 6px;
+    padding: 6px 10px;
+    min-height: 0;
+
+    DockPopoverRowBox {
+      DockPopoverActive {
+        min-width: 6px;
+        min-height: 6px;
+        border-radius: 3px;
+        background: $accent-color;
+        margin-right: 2px;
+      }
+
+      DockPopoverInactive {
+        min-width: 6px;
+        min-height: 6px;
+        border-radius: 3px;
+        background: transparent;
+        margin-right: 2px;
+      }
+
+      DockPopoverRowLabel {
+        color: $text-active-color;
+        font-size: 13px;
+      }
+    }
+  }
+
+  DockPopoverRow:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  DockPopoverSeparator {
+    min-height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 4px 6px;
+  }
+}
+
+window.StartMenuLayer {
+  background: transparent;
+  color: $text-active-color;
+
+  StartMenu {
+    background: $bg-color;
+    // Concentric with the inner island (radius 10 + margin 10): 10 + 10 = 20
+    border-radius: 20px;
+    min-width: 400px;
+    min-height: 600px;
+    transform: translateY(-600px);
+  }
+
+  StartMenu.open {
+    transform: translateY(-16px);
+
+    transition: transform 500ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  StartMenu.close {
+    transform: translateY(-600px);
+
+    transition: transform 500ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  SearchBox {
+    background: $bg-up-color;
+    border-radius: 10px;
+    margin: 10px;
+
+    SearchBoxInner {
+      SearchBoxIcon {
+        margin: 10px;
+      }
+      SearchBoxEntry {
+        margin-right: 10px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        background-color: #4a4a4a;
+        border-color: transparent;
+      }
+    }
+
+    SearchBoxSeparator {
+      background: #ababab;
+      min-height: 1px;
+      margin-bottom: 10px;
+    }
+  }
+
+  AppList {
+    background: transparent;
+    margin: 0 6px 10px 10px;
+
+    AppListInner {
+      AppButton {
+        background: transparent;
+        border-radius: 8px;
+        padding: 4px 8px;
+        margin: 1px 0;
+        min-height: 0;
+
+        AppButtonInner {
+          AppButtonIcon {
+            margin-right: 10px;
+          }
+          AppButtonLabel {
+            color: $text-active-color;
+            font-size: 14px;
+          }
+        }
+      }
+
+      AppButton:hover {
+        background: #525252;
+      }
+
+      AppButton.selected {
+        background: $accent-color;
+
+        AppButtonInner AppButtonLabel {
+          color: $text-active-black-color;
+        }
+      }
+
+      AppButton.selected:hover {
+        background: $accent-color;
+      }
+    }
+
+    // Match the scrollbar to the existing color scheme
+    scrollbar {
+      background: transparent;
+      margin: 2px;
+
+      trough {
+        background: transparent;
+        border-radius: 8px;
+        min-width: 6px;
+      }
+
+      slider {
+        background: #5a5a5a;
+        border-radius: 8px;
+        min-width: 6px;
+        min-height: 30px;
+        transition: background 150ms ease;
+      }
+
+      slider:hover {
+        background: #7a7a7a;
+      }
+
+      slider:active {
+        background: $accent-color;
+      }
+    }
+
+    scrollbar.overlay-indicator:not(.hovering) slider {
+      background: #5a5a5a;
+      min-width: 4px;
+    }
+  }
+
+  // User-info island
+  UserBox {
+    background: $bg-up-color;
+    border-radius: 10px;
+    margin: 0 10px 10px 10px;
+    padding: 10px;
+
+    UserIcon {
+      min-width: 48px;
+      min-height: 48px;
+      border-radius: 24px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      margin-right: 12px;
+    }
+
+    UserText {
+      UserName {
+        color: $text-active-color;
+        font-size: 15px;
+        font-weight: bold;
+      }
+      HostName {
+        color: $text-inactive-color;
+        font-size: 12px;
+      }
+    }
+
+    LockButton,
+    PowerButton {
+      background: transparent;
+      border-radius: 8px;
+      min-width: 36px;
+      min-height: 36px;
+      padding: 0;
+      margin-left: 4px;
+    }
+
+    LockButton:hover,
+    PowerButton:hover {
+      background: #525252;
+    }
+
+    // Remove the arrow / toggle decoration that appears inside the menubutton
+    PowerButton > * {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+  }
+
+  PowerPopover {
+    background: transparent;
+
+    > contents {
+      background: $bg-up-color;
+      border-radius: 10px;
+      padding: 6px;
+      border: 1px solid #5a5a5a;
+    }
+
+    > arrow {
+      background: transparent;
+      border: none;
+    }
+
+    PowerMenu {
+      PowerMenuItem {
+        background: transparent;
+        border-radius: 6px;
+        padding: 6px 16px;
+        min-height: 0;
+
+        label {
+          color: $text-active-color;
+          font-size: 14px;
+        }
+      }
+
+      PowerMenuItem:hover {
+        background: $accent-color;
+
+        label {
+          color: $text-active-black-color;
+        }
+      }
+    }
+  }
+
+  FirstPadding {
+    min-height: 10px;
+  }
+}
+
+// Clipboard history. Follows the StartMenu design (no user info).
+window.ClipboardMenuLayer {
+  background: transparent;
+  color: $text-active-color;
+
+  ClipboardMenu {
+    background: $bg-color;
+    // Concentric with the inner island (radius 10 + margin 10): 10 + 10 = 20
+    border-radius: 20px;
+    min-width: 400px;
+    min-height: 600px;
+    transform: translateY(-600px);
+  }
+
+  ClipboardMenu.open {
+    transform: translateY(-16px);
+    transition: transform 500ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  ClipboardMenu.close {
+    transform: translateY(-600px);
+    transition: transform 500ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  SearchBox {
+    background: $bg-up-color;
+    border-radius: 10px;
+    margin: 10px;
+
+    SearchBoxInner {
+      SearchBoxIcon {
+        margin: 10px;
+      }
+      SearchBoxEntry {
+        margin-right: 10px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        background-color: #4a4a4a;
+        border-color: transparent;
+      }
+    }
+
+    SearchBoxSeparator {
+      background: #ababab;
+      min-height: 1px;
+      margin-bottom: 10px;
+    }
+  }
+
+  ClipList {
+    background: transparent;
+    margin: 0 6px 10px 10px;
+
+    ClipListInner {
+      ClipButton {
+        background: transparent;
+        border-radius: 8px;
+        padding: 6px 8px;
+        margin: 1px 0;
+        min-height: 0;
+
+        ClipButtonInner {
+          ClipThumb {
+            border-radius: 6px;
+            margin-right: 12px;
+            min-width: 60px;
+            min-height: 130px;
+          }
+          ClipButtonLabel {
+            color: $text-active-color;
+            font-size: 13px;
+          }
+        }
+      }
+
+      ClipButton:hover {
+        background: #525252;
+      }
+
+      ClipButton.selected {
+        background: $accent-color;
+
+        ClipButtonInner ClipButtonLabel {
+          color: $text-active-black-color;
+        }
+      }
+
+      ClipButton.selected:hover {
+        background: $accent-color;
+      }
+    }
+
+    // Scrollbar (same as StartMenu)
+    scrollbar {
+      background: transparent;
+      margin: 2px;
+
+      trough {
+        background: transparent;
+        border-radius: 8px;
+        min-width: 6px;
+      }
+
+      slider {
+        background: #5a5a5a;
+        border-radius: 8px;
+        min-width: 6px;
+        min-height: 30px;
+        transition: background 150ms ease;
+      }
+
+      slider:hover {
+        background: #7a7a7a;
+      }
+
+      slider:active {
+        background: $accent-color;
+      }
+    }
+
+    scrollbar.overlay-indicator:not(.hovering) slider {
+      background: #5a5a5a;
+      min-width: 4px;
+    }
+  }
+
+  FirstPadding {
+    min-height: 10px;
+  }
+}
+
+window.ClockMenuLayer {
+  background: transparent;
+  color: $text-active-color;
+
+  // Fix the height (475px) and match the close travel to the real height so
+  // open/close look symmetric with the same cubic-bezier (translateY can't use
+  // %, so specify the real size, same as StartMenu).
+  ClockMenu {
+    background: $bg-color;
+    // Concentric with the inner island (radius 10 + margin 10): 10 + 10 = 20
+    border-radius: 20px;
+    min-width: 340px;
+    min-height: 475px;
+    transform: translateY(-475px);
+  }
+
+  ClockMenu.open {
+    transform: translateY(-16px);
+
+    transition: transform 500ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  ClockMenu.close {
+    transform: translateY(-475px);
+
+    transition: transform 500ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  FirstPadding {
+    min-height: 10px;
+  }
+
+  // Top island: date + clock + timezone
+  ClockIsland {
+    background: $bg-up-color;
+    border-radius: 10px;
+    margin: 10px 10px 0 10px;
+    padding: 16px 10px;
+
+    ClockDate {
+      color: $text-inactive-color;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    ClockTime {
+      color: $text-active-color;
+      font-size: 40px;
+      font-weight: bold;
+      font-feature-settings: "tnum";
+    }
+
+    ClockTimezone {
+      color: $text-inactive-color;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+  }
+
+  // Bottom island: calendar
+  CalendarIsland {
+    background: $bg-up-color;
+    border-radius: 10px;
+    margin: 10px;
+    padding: 8px;
+  }
+
+  // Specify every node explicitly so the calendar is not affected by the
+  // global theme.
+  // Node structure:
+  //   Calendar(.view)
+  //     header.horizontal -> button.image-button > image, stack.month > label, label.year
+  //     grid.horizontal   -> label.day-name / label.week-number / label.day-number[.other-month][.today]
+  Calendar {
+    background: transparent;
+    color: $text-active-color;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    outline: none;
+
+    // --- header ---
+    header {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      margin-bottom: 6px;
+
+      label {
+        color: $text-active-color;
+        font-size: 15px;
+        font-weight: bold;
+        background: transparent;
+      }
+
+      label.year {
+        color: $text-active-color;
+      }
+
+      stack.month {
+        background: transparent;
+
+        label {
+          color: $text-active-color;
+        }
+      }
+
+      button.image-button {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        outline: none;
+        min-width: 28px;
+        min-height: 28px;
+        padding: 0;
+        margin: 0 1px;
+        border-radius: 6px;
+        color: $text-active-color;
+
+        image {
+          color: $text-active-color;
+          -gtk-icon-size: 16px;
+        }
+      }
+
+      button.image-button:hover {
+        background: #525252;
+      }
+
+      button.image-button:active {
+        background: #5f5f5f;
+      }
+    }
+
+    // --- grid ---
+    grid {
+      background: transparent;
+
+      label {
+        color: $text-active-color;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        outline: none;
+        min-width: 34px;
+        min-height: 30px;
+        padding: 2px;
+        margin: 1px;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+
+      // Weekday headings
+      label.day-name {
+        color: $text-inactive-color;
+        font-weight: bold;
+        font-size: 12px;
+        background: transparent;
+      }
+
+      // Week number (hidden, but styled just in case)
+      label.week-number {
+        color: $text-inactive-color;
+        font-size: 11px;
+        background: transparent;
+      }
+
+      // Date cells
+      label.day-number {
+        color: $text-active-color;
+        background: transparent;
+      }
+
+      label.day-number:hover {
+        background: #525252;
+        color: $text-active-color;
+      }
+
+      // Days outside the current month
+      label.day-number.other-month {
+        color: rgba(245, 245, 245, 0.28);
+        background: transparent;
+      }
+
+      label.day-number.other-month:hover {
+        background: #4a4a4a;
+        color: rgba(245, 245, 245, 0.5);
+      }
+
+      // Today
+      label.day-number.today {
+        background: #5a5a5a;
+        color: $text-active-color;
+        font-weight: bold;
+      }
+
+      label.day-number.today:hover {
+        background: #6a6a6a;
+      }
+
+      // Selected date
+      label.day-number:selected {
+        background: $accent-color;
+        color: $text-active-black-color;
+        font-weight: bold;
+      }
+
+      label.day-number.today:selected {
+        background: $accent-color;
+        color: $text-active-black-color;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// Status (Wifi/BT/PPD/Notif + Sliders + Media) menu
+// =============================================================================
+window.Bar {
+  StatusButton {
+    border-radius: 8px;
+    min-height: 26px;
+    padding: 0 8px;
+    background: transparent;
+    margin-left: 4px;
+
+    StatusButtonRow {
+      StatusButtonIcon {
+        -gtk-icon-size: 14px;
+      }
+    }
+  }
+
+  StatusButton:hover {
+    background: #2a2a2a50;
+  }
+
+  StatusButton.pressed {
+    background: $accent-color;
+  }
+}
+
+window.StatusMenuLayer {
+  background: transparent;
+  color: $text-active-color;
+
+  StatusMenu {
+    background: $bg-color;
+    // Concentric with the inner island (radius 10 + margin 10): 10 + 10 = 20
+    border-radius: 20px;
+    min-width: 380px;
+    min-height: 620px;
+    transform: translateY(-646px);
+  }
+
+  StatusMenu.open {
+    transform: translateY(-16px);
+    transition: transform 500ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  StatusMenu.close {
+    transform: translateY(-645px);
+    transition: transform 500ms cubic-bezier(0.1, 0.9, 0.2, 1);
+  }
+
+  FirstPadding {
+    min-height: 10px;
+  }
+
+  // ---- Quick island ----
+  QuickIsland {
+    background: $bg-up-color;
+    border-radius: 10px;
+    margin: 10px 10px 0 10px;
+    padding: 10px;
+
+    QuickGrid {
+    }
+
+    QuickSeparator {
+      min-height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 10px 2px;
+    }
+
+    QuickButton {
+      background: #3a3a3a;
+      border-radius: 8px;
+      padding: 8px 10px;
+      min-height: 0;
+
+      QuickButtonInner {
+        QuickButtonIcon {
+          -gtk-icon-size: 18px;
+        }
+
+        QuickButtonLabel {
+          color: $text-active-color;
+          font-size: 12px;
+          font-weight: bold;
+        }
+
+        QuickButtonArrow {
+          -gtk-icon-size: 12px;
+          opacity: 0.7;
+        }
+      }
+    }
+
+    QuickButton:hover {
+      background: #4a4a4a;
+    }
+
+    QuickButton.active {
+      background: $accent-color;
+
+      QuickButtonInner QuickButtonLabel {
+        color: $text-active-black-color;
+      }
+    }
+
+    QuickButton.expanded {
+      // A slight border so it's distinguishable even when it overlaps active
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+    }
+
+    QuickButton.active.expanded {
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+    }
+
+    SubmenuScroll {
+      background: transparent;
+      min-height: 180px;
+
+      SubmenuBox {
+        SubmenuList {
+          SubmenuRow {
+            background: transparent;
+            border-radius: 6px;
+            padding: 6px 10px;
+            min-height: 0;
+
+            SubmenuRowLabel {
+              color: $text-active-color;
+              font-size: 13px;
+            }
+
+            SubmenuRowSub {
+              color: $text-inactive-color;
+              font-size: 11px;
+            }
+          }
+
+          SubmenuRow:hover {
+            background: rgba(255, 255, 255, 0.06);
+          }
+
+          SubmenuRow.active {
+            background: $accent-color;
+
+            SubmenuRowLabel,
+            SubmenuRowSub {
+              color: $text-active-black-color;
+            }
+          }
+        }
+
+        SubmenuHeader {
+          padding: 4px 4px 4px 8px;
+
+          SubmenuHeaderLabel {
+            color: $text-active-color;
+            font-size: 13px;
+            font-weight: bold;
+          }
+
+          SubmenuHeaderAction {
+            background: #3a3a3a;
+            border-radius: 6px;
+            padding: 4px 10px;
+            min-height: 0;
+            color: $text-active-color;
+            font-size: 11px;
+          }
+
+          SubmenuHeaderAction:hover {
+            background: #4a4a4a;
+          }
+        }
+
+        SubmenuEmpty {
+          color: $text-inactive-color;
+          font-size: 12px;
+          padding: 20px 0;
+        }
+
+        // Single notification row style: see the @mixin above.
+        @include notif-row;
+      }
+
+      // Not overlay, so the scrollbar itself takes up width. Draw it thin and
+      // leave a little gap from the content to reduce the sense of crowding.
+      scrollbar {
+        background: transparent;
+        border: none;
+        padding: 0 2px;
+        margin-left: 4px;
+        min-width: 6px;
+        slider {
+          background: #5a5a5a;
+          border-radius: 8px;
+          min-width: 4px;
+          margin: 2px 0;
+        }
+        slider:hover {
+          background: #7a7a7a;
+        }
+      }
+    }
+  }
+
+  // ---- Sliders island ----
+  SlidersIsland {
+    background: $bg-up-color;
+    border-radius: 10px;
+    margin: 10px 10px 0 10px;
+    padding: 4px 8px;
+
+    SliderRow {
+      SliderIcon {
+        background: transparent;
+        border-radius: 6px;
+        padding: 2px;
+        min-height: 0;
+        min-width: 0;
+      }
+
+      SliderIcon:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      // 0..100 numeric display. It is padStart(3, " "), so with a monospace
+      // font there is no layout shift from digit-count changes.
+      SliderValue {
+        color: $text-active-color;
+        font-family: monospace;
+        font-size: 12px;
+        font-feature-settings: "tnum";
+        min-width: 24px;
+      }
+
+      // Exactly the same dimensions / behavior as MediaProgress.
+      scale {
+        min-height: 12px;
+
+        trough {
+          background: #3a3a3a;
+          border-radius: 3px;
+          min-height: 4px;
+        }
+
+        trough highlight {
+          background: $accent-color;
+          border-radius: 3px;
+          min-height: 4px;
+        }
+
+        slider {
+          background: $accent-color;
+          border-radius: 999px;
+          min-width: 12px;
+          min-height: 12px;
+          margin: -4px;
+          box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+          transition: transform 120ms ease;
+        }
+      }
+
+      scale:hover slider,
+      scale:active slider {
+        transform: scale(1.15);
+      }
+    }
+  }
+
+  // ---- Media island ----
+  MediaIsland {
+    background: $bg-up-color;
+    border-radius: 10px;
+    margin: 10px;
+    padding: 10px;
+
+    MediaTop {
+      MediaArt {
+        background: #2a2a2a;
+        border-radius: 8px;
+      }
+
+      MediaInfo {
+        MediaTitle {
+          color: $text-active-color;
+          font-size: 14px;
+          font-weight: bold;
+        }
+
+        MediaArtist {
+          color: $text-inactive-color;
+          font-size: 12px;
+          margin-top: 2px;
+        }
+      }
+    }
+
+    MediaProgressRow {
+      MediaTime {
+        color: $text-inactive-color;
+        font-size: 10px;
+        font-feature-settings: "tnum";
+      }
+
+      // Seekable via Gtk.Scale (.MediaProgress). Node structure is
+      // scale > trough > highlight + slider.
+      scale.MediaProgress {
+        min-height: 12px;
+
+        trough {
+          background: #3a3a3a;
+          border-radius: 3px;
+          min-height: 4px;
+        }
+
+        trough highlight {
+          background: $accent-color;
+          border-radius: 3px;
+          min-height: 4px;
+        }
+
+        slider {
+          background: $accent-color;
+          border-radius: 999px;
+          min-width: 12px;
+          min-height: 12px;
+          margin: -4px;
+          // Subtle initially, more prominent on hover
+          box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+          transition: transform 120ms ease;
+        }
+      }
+
+      scale.MediaProgress:hover slider,
+      scale.MediaProgress:active slider {
+        transform: scale(1.15);
+      }
+    }
+
+    MediaControls {
+      MediaButton {
+        background: transparent;
+        border-radius: 50%;
+        min-width: 36px;
+        min-height: 36px;
+        padding: 0;
+      }
+
+      MediaButton:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      // Previously only MediaPlayPause was larger, but that pushed up the row
+      // height and made the adjacent next/prev buttons tall, so make them all
+      // the same size.
+    }
+  }
+}
+
+// =============================================================================
+// Wi-Fi submenu extras
+// =============================================================================
+window.StatusMenuLayer {
+  QuickIsland SubmenuScroll SubmenuBox {
+    WifiToggleRow {
+      padding: 4px 8px;
+
+      WifiToggleLabel {
+        color: $text-active-color;
+        font-size: 13px;
+        font-weight: bold;
+      }
+
+      // Gtk.Switch style. In GTK4 cssName="switch" is the base, with a slider
+      // node inside. :checked is the ON state.
+      WifiSwitch {
+        min-width: 40px;
+        min-height: 22px;
+        border-radius: 999px;
+        background: #3a3a3a;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        transition: background 150ms ease;
+
+        slider {
+          background: $text-active-color;
+          border-radius: 999px;
+          min-width: 18px;
+          min-height: 18px;
+          margin: 2px;
+        }
+      }
+
+      WifiSwitch:hover {
+        background: #4a4a4a;
+      }
+
+      WifiSwitch:checked {
+        background: $accent-color;
+
+        slider {
+          background: $text-active-black-color;
+        }
+      }
+
+      WifiSwitch:checked:hover {
+        background: #a0e0e8;
+      }
+    }
+
+    WifiActionsRow {
+      padding: 0 6px;
+
+      WifiActionButton {
+        background: #3a3a3a;
+        border-radius: 6px;
+        padding: 4px 10px;
+        min-height: 0;
+        color: $text-active-color;
+        font-size: 11px;
+      }
+
+      WifiActionButton:hover {
+        background: #4a4a4a;
+      }
+
+      WifiActionButton:disabled {
+        background: transparent;
+        color: rgba(245, 245, 245, 0.3);
+      }
+    }
+
+    WifiPasswordForm,
+    WifiErrorForm {
+      padding: 8px 8px 4px 8px;
+
+      WifiFormHeading {
+        color: $text-active-color;
+        font-size: 13px;
+        font-weight: bold;
+      }
+
+      WifiFormSub {
+        color: $text-inactive-color;
+        font-size: 11px;
+      }
+
+      WifiFormError {
+        color: #ff8888;
+        font-size: 11px;
+      }
+
+      WifiPasswordEntry {
+        background: #1f1f1f;
+        border-radius: 6px;
+        padding: 6px 8px;
+        color: $text-active-color;
+        border: 1px solid #4a4a4a;
+      }
+
+      WifiFormCancel,
+      WifiFormConnect {
+        background: #3a3a3a;
+        color: $text-active-color;
+        border-radius: 6px;
+        padding: 4px 12px;
+        min-height: 0;
+        font-size: 12px;
+      }
+
+      WifiFormCancel:hover {
+        background: #4a4a4a;
+      }
+
+      WifiFormConnect {
+        background: $accent-color;
+        color: $bg-color;
+      }
+
+      WifiFormConnect:hover {
+        background: #a0e0e8;
+      }
+    }
+
+    WifiConnecting {
+      padding: 20px;
+
+      spinner {
+        min-width: 24px;
+        min-height: 24px;
+        color: $accent-color;
+      }
+
+      WifiConnectingLabel {
+        color: $text-active-color;
+        font-size: 12px;
+        margin-top: 6px;
+      }
+    }
+  }
+}
+
+// =============================================================================
+// Notification Popups (transient banners shown in the top-right)
+// =============================================================================
+window.NotifPopupLayer {
+  background: transparent;
+
+  // Don't use padding: positioning is done with the layer-shell margin, so
+  // surface = container = the popup's natural size.
+  NotifPopupContainer {
+    background: transparent;
+    min-width: 360px;
+  }
+
+  NotifPopupList {
+    background: transparent;
+    min-width: 360px;
+  }
+
+  // Reuse the whole NotifRow / .entering / .leaving / .clickable:hover set.
+  @include notif-row;
+
+  // Popups appear over the wallpaper or app screens, so a transparent
+  // background would be unreadable. Override with an opaque custom background
+  // plus a light border to define the edge.
+  NotifRow {
+    background: $bg-up-color;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  NotifRow.clickable:hover {
+    background: #353535;
+  }
+}
+
+// =============================================================================
+// Battery popover
+// =============================================================================
+BatteryPopover {
+  background: transparent;
+
+  contents {
+    background: $bg-color;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0;
+  }
+
+  BatteryPopoverBox {
+    padding: 12px 14px;
+    min-width: 240px;
+  }
+
+  BatteryPopoverHeader {
+    BatteryPopoverIcon {
+      -gtk-icon-size: 28px;
+      color: $text-active-color;
+    }
+
+    BatteryPopoverPercent {
+      color: $text-active-color;
+      font-size: 18px;
+      font-weight: bold;
+      font-feature-settings: "tnum";
+    }
+
+    BatteryPopoverState {
+      color: $text-inactive-color;
+      font-size: 11px;
+      margin-top: 1px;
+    }
+  }
+
+  BatteryPopoverSep {
+    min-height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 4px 0;
+  }
+
+  BatteryDetailRow {
+    BatteryDetailLabel {
+      color: $text-inactive-color;
+      font-size: 12px;
+    }
+
+    BatteryDetailValue {
+      color: $text-active-color;
+      font-size: 12px;
+      font-feature-settings: "tnum";
+    }
+  }
+}
+
+// =============================================================================
+// CPU / memory popover (same look as the battery popover, shared by both).
+// =============================================================================
+UsagePopover {
+  background: transparent;
+
+  contents {
+    background: $bg-color;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0;
+  }
+
+  UsagePopoverBox {
+    padding: 12px 14px;
+    min-width: 240px;
+  }
+
+  UsagePopoverHeader {
+    UsagePopoverIcon {
+      -gtk-icon-size: 28px;
+      color: $text-active-color;
+    }
+
+    UsagePopoverPercent {
+      color: $text-active-color;
+      font-size: 18px;
+      font-weight: bold;
+      font-feature-settings: "tnum";
+    }
+
+    UsagePopoverState {
+      color: $text-inactive-color;
+      font-size: 11px;
+      margin-top: 1px;
+    }
+  }
+
+  UsagePopoverSep {
+    min-height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 4px 0;
+  }
+
+  UsageDetailRow {
+    UsageDetailLabel {
+      color: $text-inactive-color;
+      font-size: 12px;
+    }
+
+    UsageDetailValue {
+      color: $text-active-color;
+      font-size: 12px;
+      font-feature-settings: "tnum";
+    }
+  }
+}
+
+// Monitor-identify overlay. Shows the connector name large in the center of each monitor.
+window.MonitorIdentify {
+  background: transparent;
+
+  MonitorIdentifyBox {
+    background: rgba(21, 21, 21, 0.88);
+    border-radius: 24px;
+    border: 3px solid $accent-color;
+    padding: 32px 64px;
+
+    MonitorIdentifyLabel {
+      color: $text-active-color;
+      font-family: monospace;
+      font-size: 72px;
+      font-weight: bold;
+    }
+  }
+}
+
+// Snap-zone preview overlay (Windows-style edge snapping + tiling drop slot).
+// The layer fills the monitor and is click-through; the box is positioned via
+// margins. It pops in with an expanding ease and fades out via opacity.
+.SnapPreviewLayer {
+  background: transparent;
+
+  // Opacity and scale are independent classes so the box fades in while
+  // expanding on first show, and re-expands (without fading) on a zone change.
+  // The base state is already scaled down, so there is never a full-size,
+  // opaque frame — which previously looked like a momentary window maximize.
+  SnapPreviewBox {
+    background: rgba($accent-color, 0.18);
+    border: 2px solid rgba($accent-color, 0.9);
+    border-radius: 16px;
+    opacity: 0;
+    transform: scale(0.82);
+    transition:
+      opacity 200ms ease,
+      transform 320ms cubic-bezier(0.1, 0.9, 0.2, 1);
+
+    &.shown {
+      opacity: 1;
+    }
+
+    &.grown {
+      transform: scale(1);
+    }
+  }
+}

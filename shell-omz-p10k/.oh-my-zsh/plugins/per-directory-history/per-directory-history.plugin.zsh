@@ -1,0 +1,1 @@
+/home/ananasik/.oh-my-zsh.bak/plugins/per-directory-history/per-directory-history.zsh
