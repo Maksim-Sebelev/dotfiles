@@ -155,17 +155,7 @@ export function rainWindowWindowEffect(window: WaylandWindow): LayerEffectHandle
       pipeline: [
         dualKawaseBlur({ radius: 1, passes: 2 }),
         // ===================================================================
-        shaderStage(loadShader("./shaders/window/rain.1.frag"), {
-          uniforms: {
-            time: timeSig,
-            aspect: aspectSig,
-            speed: RAIN_WINDOW_SPEED,
-            angle_deg: RAIN_WINDOW_ANGLE_DEG,
-            rain_amount: 0.4,
-          },
-        }),
-        // ===================================================================
-        // shaderStage(loadShader("./shaders/window/rain.2.frag"), {
+        // shaderStage(loadShader("./shaders/window/rain.1.frag"), {
         //   uniforms: {
         //     time: timeSig,
         //     aspect: aspectSig,
@@ -174,6 +164,16 @@ export function rainWindowWindowEffect(window: WaylandWindow): LayerEffectHandle
         //     rain_amount: 0.4,
         //   },
         // }),
+        // ===================================================================
+        shaderStage(loadShader("./shaders/window/rain.2.frag"), {
+          uniforms: {
+            time: timeSig,
+            aspect: aspectSig,
+            speed: RAIN_WINDOW_SPEED,
+            angle_deg: 180 - RAIN_WINDOW_ANGLE_DEG,
+            rain_amount: 0.0,
+          },
+        }),
         // // ===================================================================
         // shaderStage(loadShader("./shaders/window/rain.3.frag"), {
         //   uniforms: {
@@ -199,13 +199,13 @@ export function rainWindowWindowEffect(window: WaylandWindow): LayerEffectHandle
         //   uniforms: {
         //     time: timeSig,
         //     aspect: aspectSig,
-        //     speed: RAIN_WINDOW_SPEED,
+        //     speed: RAIN_WINDOW_SPEED * 0.5,
         //     angle_deg: 180 - RAIN_WINDOW_ANGLE_DEG,
         //     rain_amount: 0.2,
         //     streak_length: 1,
         //     brightness: 1.0,
         //     trail_strength: 0.1,
-        //     trail_color: [0.3, 0.3, 0.3],
+        //     trail_color: [0.6, 0.6, 0.6],
         //     bg_blur: 1.0,
         //   },
         // }),

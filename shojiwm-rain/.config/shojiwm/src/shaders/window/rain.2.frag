@@ -319,13 +319,13 @@ vec4 shader_main(EffectContext effect) {
     vec2 LocalUV = (effect.texture_uv - 0.5);
     LocalUV.x *= aspect;
 
-    float a = radians(-angle_deg);
+    float a = radians(angle_deg);
     float ca = cos(a);
     float sa = sin(a);
     mat2 rotM = mat2(ca, -sa, sa, ca);
     LocalUV = rotM * LocalUV;
 
-    float Time = - time * speed;
+    float Time = time * speed;
 
     vec4 Raindrop = Raindrops(LocalUV, Time,
         StaticRaindropUVScale, RollingRaindropUVScaleLayer01);
