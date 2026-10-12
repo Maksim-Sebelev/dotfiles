@@ -142,11 +142,6 @@ export function registerBinds(wm: HybridWindowManager, schedule: () => void) {
     schedule();
   });
   
-  COMPOSITOR.key.bind("workspace-switch-10", "Super+0", () => {
-    const monitor = wm.getCurrentMonitorName();
-    wm.switchWorkspaceTo(monitor, 10);
-    schedule();
-  });
   for (let i = 1; i <= 9; i++) {
     COMPOSITOR.key.bind(`workspace-switch-${i}`, `Super+${i}`, () => {
       const monitor = wm.getCurrentMonitorName();
@@ -154,13 +149,12 @@ export function registerBinds(wm: HybridWindowManager, schedule: () => void) {
       schedule();
     });
   }
-  
-  COMPOSITOR.key.bind("window-move-workspace-10", "Super+Shift+0", () => {
+  COMPOSITOR.key.bind("workspace-switch-10", "Super+0", () => {
     const monitor = wm.getCurrentMonitorName();
     wm.switchWorkspaceTo(monitor, 10);
     schedule();
-    wm.moveFocusedWindowToWorkspace(10);
   });
+
   for (let i = 1; i <= 9; i++) {
     COMPOSITOR.key.bind(`window-move-workspace-${i}`, `Super+Shift+${i}`, () => {
       const monitor = wm.getCurrentMonitorName();
@@ -169,6 +163,12 @@ export function registerBinds(wm: HybridWindowManager, schedule: () => void) {
       wm.moveFocusedWindowToWorkspace(i);
     });
   }
+  COMPOSITOR.key.bind("window-move-workspace-10", "Super+Shift+0", () => {
+    const monitor = wm.getCurrentMonitorName();
+    wm.switchWorkspaceTo(monitor, 10);
+    schedule();
+    wm.moveFocusedWindowToWorkspace(10);
+  });
   
   COMPOSITOR.key.bind("volume-up", "XF86AudioRaiseVolume", () => {
     COMPOSITOR.process.spawn({ command: "volume-up 5" });

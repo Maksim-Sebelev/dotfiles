@@ -27,7 +27,8 @@ import {
 } from "shoji_wm";
 import type { CompositionRenderable, ManagedWindowRect } from "shoji_wm/types";
 import { createIpcServer } from "shoji_wm/ipc";
-import { rainWindowWallpaperEffect, rainWindowWindowEffect, disposeRain } from "./settings/rain";
+import { terminalBackgroundAnimation, disposeTerminalBackgroundAnimation, TerminalBackgroundAnimation } from "./settings/visual-effects/terminal-background-animation";
+import { backgroundAnimation, BackgroundAnimation } from "./settings/visual-effects/background-animation";
 import {
   HybridWindowManager,
   TITLEBAR_HEIGHT,
@@ -42,7 +43,7 @@ import {
   WINDOW_STATE_WORKSPACE_VISIBLE,
   WINDOW_STATE_WORKSPACE_OFFSET_Y,
   WINDOW_STATE_WORKSPACE_OPACITY,
-} from "./settings/window-manager";
+} from "./settings/system/window-manager";
 
 COMPOSITOR.env.apply({
   QT_QPA_PLATFORM: "wayland;xcb",
@@ -87,8 +88,7 @@ COMPOSITOR.onDisable((event) => {
     const snapshot = HYBRID_WINDOW_MANAGER.snapshot();
     event.persist(HOT_RELOAD_WINDOW_MANAGER_STATE, snapshot);
   }
-  disposeRain();
-  // disposeRecording();
+  disposeTerminalBackgroundAnimation();
   HYBRID_WINDOW_MANAGER.dispose();
 });
 
@@ -276,25 +276,19 @@ COMPOSITOR.onDisable(() => {
 // ---------------------------------------------------------------------------
 // Startup application launching
 // ---------------------------------------------------------------------------
-import { configureStartupApplications } from "./settings/startup";
+import { configureStartupApplications } from "./settings/system/startup";
 configureStartupApplications();
 // ---------------------------------------------------------------------------
 // cliphist
 // ---------------------------------------------------------------------------
-import { initCliphist } from "./settings/cliphist";
+import { initCliphist } from "./settings/system/cliphist";
 initCliphist();
 // ---------------------------------------------------------------------------
 // Key bindings
 // ---------------------------------------------------------------------------
-import { registerBinds } from "./settings/binds";
+import { registerBinds } from "./settings/system/binds";
 registerBinds(HYBRID_WINDOW_MANAGER, scheduleWorkspaceBroadcast);
 // ---------------------------------------------------------------------------
-import { recordingOverlayEffect, toggleRecording, disposeRecording } from "./settings/recording.ts";
-COMPOSITOR.effect.overlay = (output, options) => {
-  const effect = recordingOverlayEffect(output);
-  if (!effect) return null;
-  return { replace: effect };
-};
 
 COMPOSITOR.output.configure((context) => {
   const display: DisplayConfigDraft = {};
@@ -350,7 +344,7 @@ COMPOSITOR.output.configure((context) => {
 // ---------------------------------------------------------------------------
 // Input devices
 // ---------------------------------------------------------------------------
-import { initInput } from "./settings/input"
+import { initInput } from "./settings/system/input"
 initInput(HYBRID_WINDOW_MANAGER);
 
 // ---------------------------------------------------------------------------
@@ -375,17 +369,16 @@ const LAYER_BLUR_MASK = compileLayerEffect({
   ],
 });
 
-// ---------------------------------------------------------------------------
-// Wallpaper layer: дождь.
-// waterWallpaperEffect оставлен в импорте — если захочешь вернуть воду,
-// просто верни `{ replace: water }` в ветке background.
-// ---------------------------------------------------------------------------
+
 COMPOSITOR.effect.layer = (layer) => {
+  // const selectedBackgroundAnimation = BackgroundAnimation.Jupiter;
+  const selectedBackgroundAnimation = BackgroundAnimation.Rain_2;
   if (
-    layer.namespace()?.includes("background") ||
-    layer.layer() === "background"
+    (layer.namespace()?.includes("background") ||
+    layer.layer() === "background") &&
+    (selectedBackgroundAnimation !== BackgroundAnimation.Nothing)
   ) {
-    return { replace: rainWindowWallpaperEffect(layer.outputName()) };
+    return { replace: backgroundAnimation(layer.outputName(), selectedBackgroundAnimation) };
   }
 
   return {};
@@ -407,7 +400,7 @@ COMPOSITOR.event.onInitialConfigure((window) => {
 });
 
 
-import { maybeMoveStartupWindow } from "./settings/startup";
+import { maybeMoveStartupWindow } from "./settings/system/startup";
 COMPOSITOR.event.onFirstCommit((window) => {
   HYBRID_WINDOW_MANAGER.onFirstCommit(window);
   // waterTrackWindow(window);
@@ -623,9 +616,13 @@ COMPOSITOR.window.composition = (window: WaylandWindow) => {
   );
 
   const TERMINALS = ["kitty", "ghostty"];
-  if (TERMINALS.includes(window.appId() ?? "")) {
+  // this variable allows you to change animation of terminal background simple
+  // current available values:
+  // 1, 2, 3, 4, 5
+  const selectedTerminalBackgroundAnimation = TerminalBackgroundAnimation.Rain_2;
+  if ((TERMINALS.includes(window.appId() ?? "")) && (selectedTerminalBackgroundAnimation !== TerminalBackgroundAnimation.Nothing)) {
     innerComponents = (
-      <ShaderEffect shader={rainWindowWindowEffect(window)} direction="column">
+      <ShaderEffect shader={terminalBackgroundAnimation(window, selectedTerminalBackgroundAnimation)} direction="column">
         <Box direction="row" style={titlebarStyle}>
           {appIcon}
           {label}

@@ -1,1 +1,0 @@
-../../../../../../.general/shojiwm/src/shaders/window-grayscale.frag

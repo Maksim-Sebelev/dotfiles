@@ -1,1 +1,0 @@
-../../../../../.general/shojiwm/src/settings/window-manager.ts
