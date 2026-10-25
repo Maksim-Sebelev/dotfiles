@@ -2,7 +2,7 @@ import { COMPOSITOR, type WaylandWindow } from "shoji_wm";
 import type { HybridWindowManager } from "./window-manager";
 import { recordingOverlayEffect, toggleRecording, disposeRecording } from "./recording";
 
-export function registerBinds(wm: HybridWindowManager, schedule: () => void) {
+export function initBinds(wm: HybridWindowManager, schedule: () => void) {
 
   // COMPOSITOR.pointer.bindWindowMoveModifier("Super");
   // COMPOSITOR.pointer.bindWindowResizeModifier("Super");

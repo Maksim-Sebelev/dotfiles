@@ -31,7 +31,7 @@ function launchOnWorkspace(
   });
 }
 
-export function configureStartupApplications() {
+export function initPrimaryState() {
   COMPOSITOR.process.once("fcitx5", {
     command: "fcitx5 -d",
     runPolicy: "once-per-session",
