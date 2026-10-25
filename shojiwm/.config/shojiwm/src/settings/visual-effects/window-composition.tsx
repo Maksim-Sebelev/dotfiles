@@ -56,11 +56,9 @@ import { type OutlookConfig } from "../visual-effects-config.ts";
 
 const FULLSCREEN_Z_INDEX = 2_000_000_000;
 
-// Терминалы, для которых включается дождевой фон.
 const TERMINALS = ["kitty", "ghostty"];
 
 export function initWindowComposition(wm: HybridWindowManager, config: OutlookConfig): void {
-  // Простой blur для титлбара (без дождя).
   const titleOnlyShader = compileEffect({
     input: backdropSource(),
     capturePadding: 24,

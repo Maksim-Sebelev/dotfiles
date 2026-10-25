@@ -152,6 +152,7 @@ alias changed-files="gst --short | awk '{\$1=\"\"; print \$0}'"
 alias changed-files-inline="changed-files | tr '\n' ' '"
 alias get-sources-from-build='find .. -path "../build" -prune -o \( -name "*.cpp" -o -name "*.hpp" -o -name "*.cppm" -o -name "*.c" -o -name "*.h" \) -print | tr "\n" " "'alias format-from-build='clang-format-23 -i $(get-sources-from-build)'
 alias hx=/usr/bin/helix
+alias z=/usr/bin/yazi
 alias tor-browser=/home/ananasik/.local/share/one-dir-applications/tor/tor-browser/Browser/start-tor-browser
 alias pony-is-watching-you='ponysay --pony rainbowdash "че зыришь, глаза пузыришь"'
 

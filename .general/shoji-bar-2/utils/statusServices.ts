@@ -138,16 +138,6 @@ async function pollWifiState(): Promise<void> {
     // 2) Determine CONNECTED/CONNECTING from device state + capture the iface
     let deviceState: string | null = null
     try {
-      // const out = await execAsync(["nmcli", "-t", "-f", "TYPE,STATE", "device"])
-      // const text = typeof out === "string" ? out : ""
-      // for (const line of text.split("\n")) {
-      //   const f = splitNmcliFields(line)
-      //   if (f.length < 2) continue
-      //   if (f[0] === "wifi") {
-      //     deviceState = f[1]
-      //     break
-      //   }
-      // }
       const out = await execAsync(["nmcli", "-t", "-f", "TYPE,STATE", "device"])
       const text = typeof out === "string" ? out : ""
       for (const line of text.split("\n")) {

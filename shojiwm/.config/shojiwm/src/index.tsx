@@ -15,9 +15,9 @@ import {
 
 initAll(
   {
-    bar: Bar.Waybar,
+    bar: Bar.ShojiBar2,
     background: BackgroundAnimation.Rain_2,
-    terminalBackground: TerminalBackgroundAnimation.Rain_3,
+    terminalBackground: TerminalBackgroundAnimation.Rain_2,
     popup: PopupAnimation.Nothing,
   }
 );

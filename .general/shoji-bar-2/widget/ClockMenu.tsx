@@ -81,11 +81,8 @@ export function ClockButton({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
     >
       <label
         cssName="ClockButtonLabel"
-        // label={now(
-          // (dt) => `${dt.format("%m/%d")} ${weekday(dt)} ${dt.format("%H:%M")}`,
-        // )}
         label={now(
-          (dt) => `${weekday(dt)}, ${dt.get_day_of_month()} ${MONTHS_EN[dt.get_month() - 1]}, ${dt.format("%H:%M")} / ${dt.format("%m.%d.%y")}`,
+          (dt) => `${dt.format("%m/%d")} ${weekday(dt)} ${dt.format("%H:%M")}`,
         )}
       />
     </button>
@@ -195,7 +192,7 @@ export function ClockMenuLayer({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
           cssName="Calendar"
           showHeading
           showDayNames
-          showWeekNumbers={true}
+          showWeekNumbers={false}
           hexpand
         />
       </box>

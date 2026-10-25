@@ -41,9 +41,9 @@ export default function Bar({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
           <MemoryButton />
           <box widthRequest={10} />
           <SystemTray />
+          <BatteryButton />
           <WallpaperButton gdkmonitor={gdkmonitor} />
           <StatusButton gdkmonitor={gdkmonitor} />
-          <BatteryButton />
           <box widthRequest={1} />
         </box>
       </centerbox>
