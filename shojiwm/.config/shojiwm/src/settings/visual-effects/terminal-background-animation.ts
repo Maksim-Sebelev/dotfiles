@@ -85,7 +85,7 @@ const RAIN_WINDOW_ANGLE_DEG = 15;
 function getSelectedAnimation(animation: TerminalBackgroundAnimation): ShaderStage | null {
   switch (animation) {
     case TerminalBackgroundAnimation.Rain_1:
-      return shaderStage(loadShader("./shaders/window/rain/1.frag"), {
+      return shaderStage(loadShader("./src/shaders/window/rain/1.frag"), {
         uniforms: {
           time: clock.time,
           aspect: clock.aspect,
@@ -95,7 +95,7 @@ function getSelectedAnimation(animation: TerminalBackgroundAnimation): ShaderSta
         },
       });
     case TerminalBackgroundAnimation.Rain_2:
-      return shaderStage(loadShader("./shaders/window/rain/2.frag"), {
+      return shaderStage(loadShader("./src/shaders/window/rain/2.frag"), {
         uniforms: {
           time: clock.time,
           aspect: clock.aspect,
@@ -105,7 +105,7 @@ function getSelectedAnimation(animation: TerminalBackgroundAnimation): ShaderSta
         },
       });
     case TerminalBackgroundAnimation.Rain_3:
-      return shaderStage(loadShader("./shaders/window/rain/3.frag"), {
+      return shaderStage(loadShader("./src/shaders/window/rain/3.frag"), {
         uniforms: {
           time: clock.time,
           aspect: clock.aspect,
@@ -115,7 +115,7 @@ function getSelectedAnimation(animation: TerminalBackgroundAnimation): ShaderSta
         },
       });
     case TerminalBackgroundAnimation.Rain_4:
-      return shaderStage(loadShader("./shaders/window/rain/4.frag"), {
+      return shaderStage(loadShader("./src/shaders/window/rain/4.frag"), {
         uniforms: {
           time: clock.time,
           aspect: clock.aspect,
@@ -125,7 +125,7 @@ function getSelectedAnimation(animation: TerminalBackgroundAnimation): ShaderSta
         },
       });
     // case TerminalBackgroundAnimation.Rain_5:
-    //   return shaderStage(loadShader("./shaders/window/rain/5.frag"), {
+    //   return shaderStage(loadShader("./src/shaders/window/rain/5.frag"), {
     //     uniforms: {
     //       time: clock.time,
     //       aspect: clock.aspect,

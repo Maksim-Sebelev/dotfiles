@@ -1,0 +1,36 @@
+alias ls='ls -a --color=auto'
+alias cp='cp -i'
+alias s='volume-off; systemctl suspend'
+alias rm-swp='rm .*.swp || rm *.swp || rm .*.swp.* || rm *swp.*'
+alias real-cloc='cloc --exclude-dir=build,tmp,log,2d-dump,third-party,assets,project_struct,.vscode,.cache,.git '
+alias vlm='valgrind --leak-check=full --track-origins=yes'
+alias everlasting-summer='reboot'
+alias rmb='rm -rf build'
+alias cdb='cd build'
+alias cmake-def='rmb && cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release'
+alias pretty-json='python3 -m json.tool'
+alias cmake-start='rmb; cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++ -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug'
+alias cmake-start-release='rmb; cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++ -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -Wno-dev'
+alias project-release-start='cmake-start-release && cdb && clcmt'
+alias project-start='cmake-start && cdb && clcmt'
+alias hpe='echo $?'
+alias can-execute='chmod +x '
+alias stwb='sudo torctl start --bridges /home/ananasik/secure/bridges/tmp.bridges'
+alias stpt='sudo torctl stop'
+alias tip='torctl ip'
+alias wt='sudo torctl status'
+alias mpv='mpv --fs --no-stop-screensaver --geometry=1920x1080'
+alias sfp='show-full-path'
+alias find-in-history='history | rg '
+alias fih=find-in-history
+alias changed-files="gst --short | awk '{\$1=\"\"; print \$0}'"
+alias changed-files-inline="changed-files | tr '\n' ' '"
+alias get-sources-from-build='find .. -path "../build" -prune -o \( -name "*.cpp" -o -name "*.hpp" -o -name "*.cppm" -o -name "*.c" -o -name "*.h" \) -print | tr "\n" " "'alias format-from-build='clang-format-23 -i $(get-sources-from-build)'
+alias hx=/usr/bin/helix
+alias z=/usr/bin/yazi
+alias tor-browser=/home/ananasik/.local/share/one-dir-applications/tor/tor-browser/Browser/start-tor-browser
+alias pony-is-watching-you='ponysay --pony rainbowdash "че зыришь, глаза пузыришь"'
+
+export VISUAL="/usr/bin/helix"
+export EDITOR="$VISUAL"
+export MPD_HOST="/run/user/1000/mpd/socket"

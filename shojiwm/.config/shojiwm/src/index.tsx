@@ -17,7 +17,7 @@ initAll(
   {
     bar: Bar.ShojiBar2,
     background: BackgroundAnimation.Rain_2,
-    terminalBackground: TerminalBackgroundAnimation.Rain_2,
+    terminalBackground: TerminalBackgroundAnimation.Rain_3,
     popup: PopupAnimation.Nothing,
   }
 );

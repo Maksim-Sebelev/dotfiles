@@ -101,7 +101,7 @@
   
 //   switch (animation) {
 //     case BackgroundAnimation.Rain_1:
-//       return shaderStage(loadShader("./shaders/background/rain/1.frag"), {
+//       return shaderStage(loadShader("./src/shaders/background/rain/1.frag"), {
 //         uniforms: {
 //           time: clock.time,
 //           aspect: clock.aspect,
@@ -113,7 +113,7 @@
 //         },
 //       });
 //     case BackgroundAnimation.Rain_2:
-//       return shaderStage(loadShader("./shaders/background/rain/2.frag"), {
+//       return shaderStage(loadShader("./src/shaders/background/rain/2.frag"), {
 //         uniforms: {
 //           time: clock.time,
 //           aspect: clock.aspect,
@@ -124,7 +124,7 @@
 //         },
 //       });
 //     case BackgroundAnimation.Rain_3:
-//       return shaderStage(loadShader("./shaders/background/rain/3.frag"), {
+//       return shaderStage(loadShader("./src/shaders/background/rain/3.frag"), {
 //         uniforms: {
 //           time: clock.time,
 //           aspect: clock.aspect,
@@ -136,7 +136,7 @@
 //         },
 //       });
 //     case BackgroundAnimation.Rain_4:
-//       return shaderStage(loadShader("./shaders/background/rain/4.frag"), {
+//       return shaderStage(loadShader("./src/shaders/background/rain/4.frag"), {
 //         uniforms: {
 //           time: clock.time,
 //           aspect: clock.aspect,
@@ -148,7 +148,7 @@
 //         },
 //       });
 //     case BackgroundAnimation.Synthway_day:
-//       return shaderStage(loadShader("./shaders/background/synthway/1.frag"), {
+//       return shaderStage(loadShader("./src/shaders/background/synthway/1.frag"), {
 //         uniforms: {
 //           time: clock.time,
 //           aspect: clock.aspect,
@@ -161,7 +161,7 @@
 //       });
     
 //     case BackgroundAnimation.Synthway_night:
-//       return shaderStage(loadShader("./shaders/background/synthway/1.frag"), {
+//       return shaderStage(loadShader("./src/shaders/background/synthway/1.frag"), {
 //         uniforms: {
 //           time: clock.time,
 //           aspect: clock.aspect,
@@ -194,7 +194,7 @@
 //           renderTo(state, {
 //             input: stateSource(state),
 //             pipeline: [
-//               shaderStage(loadShader("./shaders/background/jupiter/feedback.frag"), {
+//               shaderStage(loadShader("./src/shaders/background/jupiter/feedback.frag"), {
 //                 uniforms: {
 //                   time: timeSig,
 //                   aspect: aspectSig,
@@ -203,12 +203,12 @@
 //               }),
 //             ],
 //           }),
-//           shaderStage(loadShader("./shaders/background/jupiter/sharpen.frag"), {
+//           shaderStage(loadShader("./src/shaders/background/jupiter/sharpen.frag"), {
 //             uniforms: {
 //               aspect: aspectSig,
 //             },
 //           }),
-//           shaderStage(loadShader("./shaders/background/jupiter/main.frag"), {
+//           shaderStage(loadShader("./src/shaders/background/jupiter/main.frag"), {
 //             uniforms: {
 //               time: timeSig,
 //               aspect: aspectSig,
@@ -409,7 +409,7 @@ function loadSelectedShader(animation: BackgroundAnimation) {
 
   switch (animation) {
     case BackgroundAnimation.Rain_1:
-      return shaderStage(loadShader("./shaders/background/rain/1.frag"), {
+      return shaderStage(loadShader("./src/shaders/background/rain/1.frag"), {
         uniforms: {
           time: clock.time,
           aspect: clock.aspect,
@@ -421,7 +421,7 @@ function loadSelectedShader(animation: BackgroundAnimation) {
         },
       });
     case BackgroundAnimation.Rain_2:
-      return shaderStage(loadShader("./shaders/background/rain/2.frag"), {
+      return shaderStage(loadShader("./src/shaders/background/rain/2.frag"), {
         uniforms: {
           time: clock.time,
           aspect: clock.aspect,
@@ -432,7 +432,7 @@ function loadSelectedShader(animation: BackgroundAnimation) {
         },
       });
     case BackgroundAnimation.Rain_3:
-      return shaderStage(loadShader("./shaders/background/rain/3.frag"), {
+      return shaderStage(loadShader("./src/shaders/background/rain/3.frag"), {
         uniforms: {
           time: clock.time,
           aspect: clock.aspect,
@@ -444,7 +444,7 @@ function loadSelectedShader(animation: BackgroundAnimation) {
         },
       });
     case BackgroundAnimation.Rain_4:
-      return shaderStage(loadShader("./shaders/background/rain/4.frag"), {
+      return shaderStage(loadShader("./src/shaders/background/rain/4.frag"), {
         uniforms: {
           time: clock.time,
           aspect: clock.aspect,
@@ -456,7 +456,7 @@ function loadSelectedShader(animation: BackgroundAnimation) {
         },
       });
     case BackgroundAnimation.Synthway_day:
-      return shaderStage(loadShader("./shaders/background/synthway/1.frag"), {
+      return shaderStage(loadShader("./src/shaders/background/synthway/1.frag"), {
         uniforms: {
           time: clock.time,
           aspect: clock.aspect,
@@ -468,7 +468,7 @@ function loadSelectedShader(animation: BackgroundAnimation) {
         },
       });
     case BackgroundAnimation.Synthway_night:
-      return shaderStage(loadShader("./shaders/background/synthway/1.frag"), {
+      return shaderStage(loadShader("./src/shaders/background/synthway/1.frag"), {
         uniforms: {
           time: clock.time,
           aspect: clock.aspect,

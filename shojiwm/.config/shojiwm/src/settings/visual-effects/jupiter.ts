@@ -66,7 +66,7 @@ function createInstance(outputName: string): LayerEffectHandle {
       renderTo(state, {
         input: stateSource(state),
         pipeline: [
-          shaderStage(loadShader("./shaders/common/jupiter-feedback.frag"), {
+          shaderStage(loadShader("./src/shaders/common/jupiter-feedback.frag"), {
             uniforms: {
               time: timeSig,
               aspect: aspectSig,
@@ -77,14 +77,14 @@ function createInstance(outputName: string): LayerEffectHandle {
       }),
 
       // 2. Sharpen: tex = state после feedback.
-      shaderStage(loadShader("./shaders/common/jupiter-sharpen.frag"), {
+      shaderStage(loadShader("./src/shaders/common/jupiter-sharpen.frag"), {
         uniforms: {
           aspect: aspectSig,
         },
       }),
 
       // 3. Финал: рисуем сцену, используя state как текстуру Юпитера.
-      shaderStage(loadShader("./shaders/background/jupiter.frag"), {
+      shaderStage(loadShader("./src/shaders/background/jupiter.frag"), {
         uniforms: {
           time: timeSig,
           aspect: aspectSig,
