@@ -95,20 +95,13 @@ export function initBinds(wm: HybridWindowManager, schedule: () => void) {
   COMPOSITOR.key.bind("toggle-focused-window-maximize", "Super+M", () => {
     wm.toggleFocusedWindowMaximize();
   });
-  COMPOSITOR.key.bind("tile-focus-left-quick", "Super+H", () => {
+  COMPOSITOR.key.bind("tile-focus-left", "Super+H", () => {
     wm.focusTile(-1);
   });
-  
-  COMPOSITOR.key.bind("tile-focus-right-quick", "Super+L", () => {
+    COMPOSITOR.key.bind("tile-focus-right", "Super+L", () => {
     wm.focusTile(1);
   });
   
-  COMPOSITOR.key.bind("tile-focus-left", "Super+Ctrl+Left", () => {
-    wm.focusTile(-1);
-  });
-  COMPOSITOR.key.bind("tile-focus-right", "Super+Ctrl+Right", () => {
-    wm.focusTile(1);
-  });
   COMPOSITOR.key.bind("tile-move-left", "Super+Shift+H", () => {
     wm.moveFocusedTile(-1);
     schedule();

@@ -82,7 +82,8 @@ export function ClockButton({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
       <label
         cssName="ClockButtonLabel"
         label={now(
-          (dt) => `${dt.format("%m/%d")} ${weekday(dt)} ${dt.format("%H:%M")}`,
+          // (dt) => `${dt.format("%m/%d")} ${weekday(dt)} ${dt.format("%H:%M")}`,
+          (dt) => `${weekday(dt)}, ${dt.format("%d.%m.%y")}, ${dt.format("%H:%M")}`,
         )}
       />
     </button>

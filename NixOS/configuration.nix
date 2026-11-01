@@ -1,35 +1,25 @@
-# Edit this configuration file to define what should be installed on
-# your system. Help is available in the configuration.nix(5) man page, on
-# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
+# # Edit this configuration file to define what should be installed on
+# # your system. Help is available in the configuration.nix(5) man page, on
+# # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
 { config, pkgs, shoji-bar-2, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [ ./hardware-configuration.nix ];
 
-  # Use the systemd-boot EFI boot loader.
+  # boot
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "nixos"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # Enable networking
+  # network
+  networking.hostName = "nixos";
   networking.networkmanager.enable = true;
 
-  # Set your time zone.
+  # time
   time.timeZone = "Europe/Moscow";
 
-  # Select internationalisation properties.
+  # locales
   i18n.defaultLocale = "en_US.UTF-8";
-
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "ru_RU.UTF-8";
     LC_IDENTIFICATION = "ru_RU.UTF-8";
@@ -42,48 +32,45 @@
     LC_TIME = "ru_RU.UTF-8";
   };
 
-  # Configure keymap in X11
+  # keyboard layouts
   services.xserver.xkb = {
     layout = "us,ru";
     options = "grp:win_space_toggle";
   };
 
-  # extra-experimental-features
+  # allow extra-experimental-features
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users."ananasik" = {
+  # my user
+  users.users.ananasik = {
     isNormalUser = true;
     description = "ananasik";
     extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [];
+    packages = with pkgs; [ ];
   };
 
-  # List packages installed in system profile.
-  # You can use https://search.nixos.org/ to find more packages (and options).
+  # packages
   environment.systemPackages = with pkgs; [
     # shell
     zsh
     bash
+    zsh-powerlevel10k
+    meslo-lgs-nf
 
-    # outlook
+    # appearance
     stow
     shoji-bar-2
-    
+
     # programming
     git
-
     kitty
-
     cmake
     gnumake
     ninja
-
     clang_22
     llvmPackages_22.clang-tools
     boost
-
-    helix # r u actually still using (neo)vim?? lol.
+    helix
     yazi
     tree
     ripgrep
@@ -97,6 +84,7 @@
     imv
     flameshot
     grim
+    ncmpcpp
 
     # network
     firefox
@@ -117,45 +105,93 @@
     bluez
     bluez-tools
     wl-clipboard
+
+    # common
+    ponysay
+    termdown
+    cmatrix
+    toilet
   ];
 
   # shell
   environment.pathsToLink = [ "/share/zsh" ];
+  environment.shells = [ pkgs.zsh ];
   users.defaultUserShell = pkgs.zsh;
-  users.users.ananasik.ignoreShellProgramCheck = true;
-  users.users.root.ignoreShellProgramCheck = true;
-  # programs.zsh.enable = true;
-  # programs.zsh = {
-  #   enable = true;
-  #   enableCompletion = true;
-  #   autosuggestions.enable = true;
-  #   syntaxHighlighting.enable = true;
-  # };
 
-  # fonts ???
+  # session variables 
+  environment.sessionVariables = {
+    EDITOR = "hx";
+    VISUAL = "hx";
+  };
+
+  programs.zsh = {
+    enable = true;
+    enableCompletion = true;
+    enableBashCompletion = true;
+    autosuggestions.enable = true;
+    syntaxHighlighting.enable = true;
+    histSize = 10000;
+    histFile = "$HOME/.zsh_history";
+    setOptions = [ "HIST_IGNORE_ALL_DUPS" ];
+
+    ohMyZsh = {
+      enable = true;
+      plugins = [ "git" ];
+    };
+
+    shellAliases = {
+      ls = "ls -a --color=auto";
+      cp = "cp -i";
+      s = "volume-off; systemctl suspend;";
+      rm-swp = "rm .*.swp || rm *.swp || rm .*.swp.* || rm *swp.*";
+      real-cloc = "cloc --exclude-dir = build,tmp,log,2d-dump,third-party,assets,project_struct,.vscode,.cache,.git ";
+      vlm = "valgrind --leak-check = full --track-origins=yes";
+      everlasting-summer = "reboot";
+      rmb = "rm -rf build";
+      cdb = "cd build";
+      hpe = "echo $?";
+      stwb = "sudo torctl start --bridges /home/ananasik/secure/bridges/tmp.bridges";
+      stpt = "sudo torctl stop";
+      tip = "torctl ip";
+      wt = "sudo torctl status";
+      mpv = "mpv --fs --no-stop-screensaver --geometry=1920x1080";
+      sfp = "show-full-path";
+      fih = "history | rg";
+      changed-files = "gst --short | awk '{$1 = \"\"; print $0}'";
+      changed-files-inline = "changed-files | tr \"\n\" \"\" ";
+      get-sources-from-build = "find .. -path \"../build\" -prune -o \\( -name \"*.cpp\" -o -name \"*.hpp\" -o -name \"*.cppm\" -o -name \"*.c\" -o -name \"*.h\" \\) -print | tr \"\n\" \"\"";
+      format-from-build = "clang-format-23 -i $(get-sources-from-build)";
+      z = "yazi";
+      tor-browser = "/home/ananasik/.local/share/one-dir-applications/tor/tor-browser/Browser/start-tor-browser";
+      pony-is-watching-you = "ponysay --pony rainbowdash \"че зыришь, глаза пузыришь\"";
+      rebuild = "sudo nixos-rebuild switch --flake \"/etc/nixos#ananasik\"";
+    };
+  
+    promptInit = ''
+      source ${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme
+      [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+      if [[ -r "''${XDG_CACHE_HOME:-''$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
+        source "''${XDG_CACHE_HOME:-''$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh"
+      fi
+    '';
+  };
+
+  # fonts
   programs.dconf.enable = true;
+  fonts.packages = with pkgs; [
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-color-emoji
+    liberation_ttf
+    fira-code
+    fira-code-symbols
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.fira-code
+  ];
 
   # audio
-  services.pulseaudio = {
-    enable = true;
-    # extraConfig = "load-module module-nametive-ptotocol-tcp auth-ip=acl=127.0.0.1";
-  };
-
-  services.mpd = {
-    enable = true;
-    startWhenNeeded = false;
-    settings = {
-      bind_to_address = "/run/mpd/socket";
-      audio_output = [
-        {
-          type = "pulse";
-          name = "Custom PulseAudio Config";
-          music_directory = "/home/ananasik/Music";
-          # server = "127.0.0.1";
-        }
-      ];
-    };
-  };
+  services.pulseaudio.enable = true;
 
   # tor
   services.tor = {
@@ -163,68 +199,10 @@
     openFirewall = true;
   };
 
-  # bluetooth
-  # services.blueman.enable = true;
-
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # List services that you want to enable:
-
+  # time sync
   services.timesyncd.enable = false;
   services.chrony.enable = true;
-  
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
 
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
-
-  # Copy the NixOS configuration file and link it from the resulting system
-  # (/run/current-system/configuration.nix). This is useful in case you
-  # accidentally delete configuration.nix.
-  # system.copySystemConfiguration = true;
-
-  # This option defines the first version of NixOS you have installed on this particular machine,
-  # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
-  #
-  # Most users should NEVER change this value after the initial install, for any reason,
-  # even if you've upgraded your system to a new NixOS release.
-  #
-  # This value does NOT affect the Nixpkgs version your packages and OS are pulled from,
-  # so changing it will NOT upgrade your system - see https://nixos.org/manual/nixos/stable/#sec-upgrading for how
-  # to actually do that.
-  #
-  # This value being lower than the current NixOS release does NOT mean your system is
-  # out of date, out of support, or vulnerable.
-  #
-  # Do NOT change this value unless you have manually inspected all the changes it would make to your configuration,
-  # and migrated your data accordingly.
-  #
-  # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
-  system.stateVersion = "26.05"; # Did you read the comment?
-
-
-  # fonts
-  fonts.packages = with pkgs; [
-     noto-fonts
-     noto-fonts-cjk-sans # Для китайского/японского/корейского
-     noto-fonts-color-emoji # Для эмодзи
-
-     liberation_ttf
-
-     fira-code
-     fira-code-symbols
-
-     nerd-fonts.jetbrains-mono
-     nerd-fonts.fira-code
-   ];
+  # system version
+  system.stateVersion = "26.05";
 }

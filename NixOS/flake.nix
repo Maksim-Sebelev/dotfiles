@@ -12,7 +12,7 @@
     };
   };
 
-  outputs = { nixpkgs, shojiwm, home-manager, ags, ... } :
+  outputs = { nixpkgs, shojiwm, home-manager, ags, ... }:
     let
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
 
@@ -33,13 +33,12 @@
           gobject-introspection
           ags.packages.${pkgs.stdenv.hostPlatform.system}.default
         ];
-        
+
         buildInputs = with pkgs; [
           gjs
           glib
           gtk4
           gtk4-layer-shell
-
           astal.io
           astal.astal4
           astal.apps
@@ -51,20 +50,15 @@
           astal.wireplumber
           astal.powerprofiles
           astal.tray
-
           papirus-icon-theme
         ];
-        
+
         installPhase = ''
           runHook preInstall
-
           mkdir -p $out/bin
-
           ags bundle app.tsx $out/bin/shoji-bar-2
-
           runHook postInstall
         '';
-
 
         preFixup = ''
           gappsWrapperArgs+=(
@@ -91,20 +85,16 @@
     {
       nixosConfigurations.ananasik = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = {
-          inherit shoji-bar-2;
-        };
+        specialArgs = { inherit shoji-bar-2; };
         modules = [
           ./configuration.nix
           ./hardware-configuration.nix
           home-manager.nixosModules.home-manager
           {
             home-manager.users.ananasik = { pkgs, ... }: {
-              # home-manager version
               home.stateVersion = "26.11";
 
-              # system backup's
-              # 5 previous states are saved
+              # do not save old states
               programs.nh = {
                 enable = true;
                 clean = {
@@ -116,10 +106,7 @@
               # git
               programs.git = {
                 enable = true;
-                package = pkgs.git.override {
-                  withLibsecret = true;
-                };
-                # whoami
+                package = pkgs.git.override { withLibsecret = true; };
                 settings = {
                   user = {
                     name = "Maksim-Sebelev";
@@ -129,7 +116,7 @@
                 };
               };
 
-              # cursor theme
+              # pointer cursos theme
               home.pointerCursor = {
                 enable = true;
                 package = pkgs.bibata-cursors;
@@ -138,6 +125,7 @@
                 gtk.enable = true;
               };
 
+              # gtk
               gtk = {
                 enable = true;
                 iconTheme = {
@@ -145,76 +133,20 @@
                   package = pkgs.papirus-icon-theme;
                 };
               };
-              # shell
-              # zsh + omz + p10k
-              programs.zsh = {
-                enable = true;
-                # enableCompletion = true;
-                # autosuggestion.enable = true;
-                # syntaxHighlighting.enable = true;
-                # syntaxHighlighting = {
-                #   enable = true;
-                #   styles = {
-                #     alias = "fg=cyan,bold";
-                #   };
-                # };
-                zplug = {
-                  enable = true;
-                  plugins = [
-                    { name = "romkatv/powerlevel10k"; tags = [ as:theme depth:1 ]; }
-                    { name = "ohmyzsh/ohmyzsh"; tags = [ "as:plugin" "depth:1" "use:plugins/git/git.plugin.zsh" ]; }
-                    { name = "zsh-users/zsh-autosuggestions"; }
-                    { name = "zsh-users/zsh-syntax-highlighting"; }
-                  ];
-                };
-                initContent = ''
-                  if [[ -r "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
-                    source "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh"
-                  fi
-                  [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-                '';
 
-                shellAliases = {
-                  ls = "ls -a --color=auto";
-                  cp = "cp -i";
-                  s = "volume-off; systemctl suspend;";
-                  rm-swp = "rm .*.swp || rm *.swp || rm .*.swp.* || rm *swp.*";
-                  real-cloc = "cloc --exclude-dir = build,tmp,log,2d-dump,third-party,assets,project_struct,.vscode,.cache,.git ";
-                  vlm = "valgrind --leak-check = full --track-origins=yes";
-                  everlasting-summer = "reboot";
-                  rmb = "rm -rf build";
-                  cdb = "cd build";
-                  cmake-def = "rmb && cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS = ON -DCMAKE_BUILD_TYPE = Release";
-                  pretty-json = "python3 -m json.tool";
-                  cmake-start = "rmb; cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++ -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug";
-                  cmake-start-release = "rmb; cmake -S . -B build -DCMAKE_CXX_COMPILER=clang++ -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -Wno-dev";
-                  project-release-start = "cmake-start-release && cdb && clcmt";
-                  project-start = "cmake-start && cdb && clcmt";
-                  hpe = "echo $?";
-                  stwb = "sudo torctl start --bridges /home/ananasik/secure/bridges/tmp.bridges";
-                  stpt = "sudo torctl stop";
-                  tip = "torctl ip";
-                  wt = "sudo torctl status";
-                  mpv = "mpv --fs --no-stop-screensaver --geometry=1920x1080";
-                  sfp = "show-full-path";
-                  find-in-history = "history | rg";
-                  fih = "find-in-history";
-                  changed-files = "gst --short | awk '{$1 = \"\"; print $0}";
-                  changed-files-inline = "changed-files | tr \"\n\" \"\" ";
-                  get-sources-from-build = "find .. -path \"../build\" -prune -o \( -name \"*.cpp\" -o -name \"*.hpp\" -o -name \"*.cppm\" -o -name \"*.c\" -o -name \"*.h\" \) -print | tr \"\n\" \"\"";
-                  format-from-build = "clang-format-23 -i $(get-sources-from-build)";
-                  z = "/usr/bin/yazi";
-                  tor-browser = "/home/ananasik/.local/share/one-dir-applications/tor/tor-browser/Browser/start-tor-browser";
-                  pony-is-watching-you = "ponysay --pony rainbowdash \"че зыришь, глаза пузыришь\"";
-                  rebuild = "sudo nixos-rebuild switch --flake \"/etc/nixos#ananasik\"";
-                };
+              # services.pulseaudio.enable = true;
+              services.mpd = {
+                 enable = true;
+                 musicDirectory = "/home/ananasik/Music";
+                 extraConfig = ''
+                   # bind_to_address "/run/user/1000/mpd/socket"
+                   audio_output {
+                     type "pulse"
+                     name "My PulseAudio"
+                   }
+                 '';
               };
-              home.sessionVariables = {
-                EDITOR = "hx";
-                VISUAL = "$EDITOR";
-                MPD_HOST="/run/user/1000/mpd/socket";
-                BROWSER = "firefox";
-              };
+
             };
           }
           shojiwm.nixosModules.default
