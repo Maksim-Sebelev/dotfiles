@@ -75,6 +75,11 @@
     tree
     ripgrep
     cloc
+    cmake-language-server
+    bash-language-server
+    typescript-language-server
+    yaml-language-server
+    marksman
 
     # media
     kdePackages.dolphin

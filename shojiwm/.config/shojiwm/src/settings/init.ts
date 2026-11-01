@@ -1,31 +1,27 @@
-import {
-  COMPOSITOR,
-} from "shoji_wm";
-
-import { initHybridWindowManager } from "./system/window-manager-runtime.ts";
-import { initPrimaryState } from "./system/startup.ts";
-import { initBar } from "./visual-effects/bar.ts";
-import { initEnvironment } from "./system/environment.ts";
-import { initOutputs } from "./system/outputs.ts";
-import { initSurfacePolicy } from "./system/surface-policy.ts";
-import { initInput } from "./system/input.ts";
-import { initCliphist } from "./system/cliphist.ts";
-import { initBinds } from "./system/binds.ts";
-import { initDockProximity } from "./system/dock-proximity.ts";
-import { initSnapPreview } from "./system/snap-preview.ts";
-import { initWindowEvents } from "./system/window-events.ts";
-import { initWindowRequests } from "./system/window-requests.ts";
-import { initCompositorEvents } from "./system/compositor-events.ts";
-import { initDecoration } from "./system/decoration.ts";
-import { initWindowComposition } from "./visual-effects/window-composition.tsx";
-import { initEffectRouter } from "./visual-effects/effect-router.ts";
-import { initLifecycle } from "./system/lifecycle.ts"
+import { initHybridWindowManager } from "./system/window-manager-runtime";
+import { initPrimaryState } from "./system/startup";
+import { initBar } from "./visual-effects/bar";
+import { initEnvironment } from "./system/environment";
+import { initOutputs } from "./system/outputs";
+import { initSurfacePolicy } from "./system/surface-policy";
+import { initInput } from "./system/input";
+import { initCliphist } from "./system/cliphist";
+import { initBinds } from "./system/binds";
+import { initDockProximity } from "./system/dock-proximity";
+import { initSnapPreview } from "./system/snap-preview";
+import { initWindowEvents } from "./system/window-events";
+import { initWindowRequests } from "./system/window-requests";
+import { initCompositorEvents } from "./system/compositor-events";
+import { initDecoration } from "./system/decoration";
+import { initWindowComposition } from "./visual-effects/window-composition";
+import { initEffectRouter } from "./visual-effects/effect-router";
+import { initLifecycle } from "./system/lifecycle"
 import {
   initIpc,
   broadcastDockProximity,
   broadcastSnapPreview,
-} from "./system/ipc.ts";
-import { type OutlookConfig } from "../visual-effects-config.ts";
+} from "./system/ipc";
+import { type OutlookConfig } from "./visual-effects-config";
 
 export function initAll(config: OutlookConfig): void {
   initLifecycle();
@@ -44,7 +40,7 @@ export function initAll(config: OutlookConfig): void {
   initWindowRequests(wm, scheduleBroadcast);
   initCompositorEvents(wm, scheduleBroadcast);
 
-  initPrimaryState(config);
+  initPrimaryState();
   initBar(config);
   initCliphist();
   initBinds(wm, scheduleBroadcast);
@@ -52,7 +48,6 @@ export function initAll(config: OutlookConfig): void {
   initInput(wm);
   initDecoration();
 
-  // Visual effects
   initEffectRouter(config);
   initWindowComposition(wm, config);
 }

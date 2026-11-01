@@ -134,12 +134,10 @@
                 };
               };
 
-              # services.pulseaudio.enable = true;
               services.mpd = {
                  enable = true;
                  musicDirectory = "/home/ananasik/Music";
                  extraConfig = ''
-                   # bind_to_address "/run/user/1000/mpd/socket"
                    audio_output {
                      type "pulse"
                      name "My PulseAudio"

@@ -1,17 +1,17 @@
 import { COMPOSITOR } from "shoji_wm";
-import { initAll } from "./settings/init.ts";
+import { initAll } from "./settings/init";
 import {
   BackgroundAnimation,
-} from "./settings/visual-effects/background-animation.ts";
+} from "./settings/visual-effects/background-animation";
 import {
   TerminalBackgroundAnimation,
-} from "./settings/visual-effects/terminal-background-animation.ts";
+} from "./settings/visual-effects/terminal-background-animation";
 import {
   PopupAnimation,
-} from "./settings/visual-effects/popup-animation.ts";
+} from "./settings/visual-effects/popup-animation";
 import {
   Bar,
-} from "./settings/visual-effects/bar.ts";
+} from "./settings/visual-effects/bar";
 
 initAll(
   {

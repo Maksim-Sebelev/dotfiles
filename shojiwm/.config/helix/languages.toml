@@ -1,1 +1,97 @@
-../../../.general/helix/languages.toml
+
+[[language]]
+name = "cpp"
+language-servers = ["clangd"]
+auto-format = true
+formatter = { command = "clang-format", args = ["--style=file"] }
+indent = { tab-width = 4, unit = "    " }
+
+[language-server.clangd]
+command = "clangd"
+args = [
+    "--background-index",
+    "--clang-tidy",
+    "--completion-style=detailed",
+    "--header-insertion=iwyu",
+    "--pch-storage=memory",
+    "--log=error",
+    "--experimental-modules-support"
+]
+
+
+[[language]]
+name = "cmake"
+scope = "source.cmake"
+file-types = ["cmake", { glob = "CMakeLists.txt" }]
+comment-token = "#"
+block-comment-tokens = { start = "#[[", end = "]]" }
+indent = { tab-width = 2, unit = "  " }
+language-servers = ["cmake-language-server"]
+injection-regex = "cmake"
+
+[[grammar]]
+name = "cmake"
+
+[[language]]
+name = "llvm"
+scope = "source.llvm"
+file-types = ["ll"]
+comment-token = ";"
+indent = { tab-width = 2, unit = "  " }
+injection-regex = "llvm"
+
+[[grammar]]
+name = "llvm"
+
+[[language]]
+name = "llvm-mir"
+scope = "source.llvm_mir"
+file-types = ["mlir"]
+comment-token = ";"
+indent = { tab-width = 2, unit = "  " }
+injection-regex = "mir"
+
+[[grammar]]
+name = "llvm-mir"
+
+[[language]]
+name = "llvm-mir-yaml"
+scope = "source.yaml"
+file-types = ["mir"]
+comment-token = "#"
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "tablegen"
+scope = "source.tablegen"
+file-types = ["td"]
+comment-token = "//"
+block-comment-tokens = { start = "/*", end = "*/" }
+indent = { tab-width = 2, unit = "  " }
+injection-regex = "tablegen"
+
+[[grammar]]
+name = "tablegen"
+
+[[language]]
+name = "markdown"
+scope = "source.md"
+injection-regex = "md|markdown"
+file-types = ["md", "markdown", "mkd", "mkdn", "mdwn", "mdown", "markdn", "mdtxt", "mdtext", "workbook", { glob = "PULLREQ_EDITMSG" }]
+roots = [".marksman.toml"]
+language-servers = [ "marksman", "markdown-oxide" ]
+indent = { tab-width = 2, unit = "  " }
+block-comment-tokens = { start = "<!--", end = "-->" }
+
+[[grammar]]
+name = "markdown"
+
+[[language]]
+name = "markdown.inline"
+scope = "source.markdown.inline"
+injection-regex = "markdown\\.inline"
+file-types = []
+grammar = "markdown_inline"
+
+[[grammar]]
+name = "markdown_inline"

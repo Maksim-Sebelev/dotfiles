@@ -42,16 +42,6 @@ export function initPrimaryState() {
     runPolicy: "once-per-session",
   });
   
-  COMPOSITOR.process.once("bar", {
-    command: "cd ~/.config/shoji-bar-2 && GTK_A11Y=none ags run app.tsx",
-    runPolicy: "once-per-session",
-  });
-  // imho, the shoji-bar-2 is too much better than shoji-bar-3
-  // COMPOSITOR.process.once("shell", {
-  //   command: "cd ~/.config/shoji-bar-3 && bash build.sh; exec quickshell --path .",
-  //   runPolicy: "once-per-session",
-  // });
-
   launchOnWorkspace("Terminal-at-startup-1", "kitty", 1, "kitty", true);
   launchOnWorkspace("Terminal-at-startup-2", "kitty", 2, "kitty", true);
   launchOnWorkspace("firefox-at-start", "firefox", 3, "firefox");

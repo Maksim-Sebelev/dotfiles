@@ -1,6 +1,5 @@
-import { COMPOSITOR, type WaylandWindow } from "shoji_wm";
+import { COMPOSITOR } from "shoji_wm";
 import type { HybridWindowManager } from "./window-manager";
-import { recordingOverlayEffect, toggleRecording, disposeRecording } from "./recording";
 
 export function initBinds(wm: HybridWindowManager, schedule: () => void) {
 
