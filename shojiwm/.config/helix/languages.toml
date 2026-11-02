@@ -1,4 +1,3 @@
-
 [[language]]
 name = "cpp"
 language-servers = ["clangd"]
@@ -14,8 +13,10 @@ args = [
     "--completion-style=detailed",
     "--header-insertion=iwyu",
     "--pch-storage=memory",
-    "--log=error",
+    "--log=verbose",
     "--experimental-modules-support"
+    # "--compile-commands-dir=build",
+    # "--query-driver=/nix/store/*/bin/clang++"
 ]
 
 
