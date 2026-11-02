@@ -1,5 +1,5 @@
 import { COMPOSITOR } from "shoji_wm";
-import { type OutlookConfig } from "../visual-effects-config.ts";
+import { type OutlookConfig } from "../visual-effects-config";
 
 export enum Bar {
   Nothing,
@@ -10,13 +10,9 @@ export enum Bar {
 export function initBar(config: OutlookConfig) {
   switch (config.bar) {
   case Bar.ShojiBar2:
-    // COMPOSITOR.process.once("shell", {
-    //   command: "cd ~/.config/shoji-bar-2 && GTK_A11Y=none ags run app.tsx",
-    //   runPolicy: "once-per-session",
-    // });
     COMPOSITOR.process.once("shell", {
-      command: "shoji-bar-2",
-      // runPolicy: "once-per-session",
+      command: "cd /home/ananasik/.config/shoji-bar-2 &&  nix shell github:aylur/ags#agsFull --offline --command ags run app.tsx",
+      runPolicy: "once-per-session",
     });
 
     break;
