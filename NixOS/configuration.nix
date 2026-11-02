@@ -1,6 +1,6 @@
-# # Edit this configuration file to define what should be installed on
-# # your system. Help is available in the configuration.nix(5) man page, on
-# # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
+# Edit this configuration file to define what should be installed on
+# your system. Help is available in the configuration.nix(5) man page, on
+# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
 { config, pkgs, shoji-bar-2, ... }:
 
@@ -10,6 +10,12 @@
   # boot
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+
+  # bluetooth
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = false;
+  };
 
   # network
   networking.hostName = "nixos";
@@ -116,6 +122,7 @@
     termdown
     cmatrix
     toilet
+    ags
   ];
 
   # shell

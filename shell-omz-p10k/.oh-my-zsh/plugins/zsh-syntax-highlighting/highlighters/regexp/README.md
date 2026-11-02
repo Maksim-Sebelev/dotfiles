@@ -1,1 +1,0 @@
-/home/ananasik/.oh-my-zsh.bak/plugins/zsh-syntax-highlighting/highlighters/regexp/../../docs/highlighters/regexp.md

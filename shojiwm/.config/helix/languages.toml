@@ -47,7 +47,7 @@ name = "llvm"
 name = "llvm-mir"
 scope = "source.llvm_mir"
 file-types = ["mlir"]
-comment-token = ";"
+comment-token = "//"
 indent = { tab-width = 2, unit = "  " }
 injection-regex = "mir"
 

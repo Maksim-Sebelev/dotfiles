@@ -1,1 +1,0 @@
-/home/ananasik/.oh-my-zsh.bak/themes/macovsky.zsh-theme

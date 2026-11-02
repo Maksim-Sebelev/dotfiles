@@ -1,1 +1,0 @@
-/home/ananasik/.oh-my-zsh.bak/plugins/zsh-syntax-highlighting/highlighters/pattern/../../docs/highlighters/pattern.md
