@@ -1,0 +1,3 @@
+#!/bin/bash
+bluetoothctl connect $(bluetoothctl devices | rg "JBL Flip 7" | awk '{print $2;}')
+
