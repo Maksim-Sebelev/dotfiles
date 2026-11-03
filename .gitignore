@@ -1,5 +1,5 @@
 # shojiwm + nixos
-shojiwm/.config/shojiwm/node_modules/
+configs/.config/shojiwm/node_modules/
 
 # shoji-bar-2 + nixos
-shojiwm/.config/shoji-bar-2/node_modules/
+configs/.config/shoji-bar-2/node_modules/
