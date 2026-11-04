@@ -78,7 +78,6 @@ export default function Bar({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
         <box $type="end">
           <CpuButton />
           <MemoryButton />
-          <SystemTray />
           <WallpaperButton gdkmonitor={gdkmonitor} />
           <StatusButton gdkmonitor={gdkmonitor} />
           <BatteryButton />
