@@ -11,7 +11,8 @@ export function initBar(config: OutlookConfig) {
   switch (config.bar) {
   case Bar.ShojiBar2:
     COMPOSITOR.process.once("shell", {
-      command: "cd /home/ananasik/.config/shoji-bar-2 &&  nix shell github:aylur/ags#agsFull --offline --command ags run app.tsx",
+      // command: "cd /home/ananasik/.config/shoji-bar-2 &&  nix shell github:aylur/ags#agsFull --offline --command ags run --bus-name ags app.tsx",
+      command: "cd /home/ananasik/.config/shoji-bar-2 && ags run app.tsx",
       runPolicy: "once-per-session",
     });
 
