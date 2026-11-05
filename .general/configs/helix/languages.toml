@@ -2,8 +2,8 @@
 name = "cpp"
 language-servers = ["clangd"]
 auto-format = true
-formatter = { command = "clang-format", args = ["--style=file"] }
-# formatter = { command = "/home/ananasik/Downloads/LLVM-23.1.0-Linux-X64/bin/clang-format", args = ["--style=file"] }
+# formatter = { command = "clang-format", args = ["--style=file"] }
+formatter = { command = "/home/ananasik/Downloads/LLVM-23.1.0-Linux-X64/bin/clang-format", args = ["--style=file"] }
 indent = { tab-width = 4, unit = "    " }
 
 [language-server.clangd]
