@@ -14,6 +14,7 @@ export enum BackgroundAnimation {
   Nothing,
   BlurOnly,
   Rain_1, Rain_2, Rain_3, Rain_4,
+  Snow_1,
   Synthway_day, Synthway_night
 }
 
@@ -161,7 +162,20 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
-
+    case BackgroundAnimation.Snow_1:
+      return [
+        // Необязательно: лёгкий блюр для смягчения обоев
+        dualKawaseBlur({ radius: 1, passes: 2 }),
+        shaderStage(loadShader("./src/shaders/background/snow/1.frag"), {
+          uniforms: {
+            time: clock.time,
+            aspect: clock.aspect,
+            speed: 1.0,
+            snow_amount: 1.0,
+            wind_strength: 0.5,
+          },
+        }),
+      ];
     default:
       console.warn(`No shader for animation ${animation}`);
       return [];

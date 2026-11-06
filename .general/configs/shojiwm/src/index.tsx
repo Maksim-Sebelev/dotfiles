@@ -1,5 +1,6 @@
 import { COMPOSITOR } from "shoji_wm";
 import { initAll } from "./settings/init";
+import { OutlookConfig } from "./settings/visual-effects-config";
 import {
   BackgroundAnimation,
 } from "./settings/visual-effects/background-animation";
@@ -13,13 +14,44 @@ import {
   Bar,
 } from "./settings/visual-effects/bar";
 
-initAll(
-  {
+enum Preset {
+  Slavya_lake_rain,
+  Ulya_winter_snow,
+  Lena,
+  Alisa,
+  Miku,
+  Handle,
+};
+
+function applyOutlookPreset(preset: Preset): OutlookConfig {
+  switch (preset) {
+    case Preset.Slavya_lake_rain:
+      return {
+        bar: Bar.ShojiBar2,
+        background: BackgroundAnimation.Rain_2,
+        terminalBackground: TerminalBackgroundAnimation.Rain_3,
+        popup: PopupAnimation.Nothing,
+      }
+    case Preset.Ulya_winter_snow:
+      return {
+        bar: Bar.ShojiBar2,
+        background: BackgroundAnimation.Snow_1,
+        terminalBackground: TerminalBackgroundAnimation.Nothing,
+        popup: PopupAnimation.Nothing,
+      }
+
+    default:
+      console.error(`Undefined preset value`);
+      break;
+  }
+  return {
     bar: Bar.ShojiBar2,
-    background: BackgroundAnimation.Rain_2,
+    background: BackgroundAnimation.Snow_1,
     terminalBackground: TerminalBackgroundAnimation.Rain_3,
     popup: PopupAnimation.Nothing,
   }
-);
+}
+
+initAll(applyOutlookPreset(Preset.Slavya_lake_rain));
 
 export default COMPOSITOR;
