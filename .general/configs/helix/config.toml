@@ -1,6 +1,7 @@
 # theme = "bogster"
 # theme = "nord-night"
-theme = "modus_vivendi"
+# theme = "modus_vivendi"
+theme = "modus_vivendi_tritanopia"
 
 [editor]
 line-number = "relative"
