@@ -12,9 +12,10 @@ const clock = acquireClock();
 
 export enum BackgroundAnimation {
   Nothing,
-  BlurOnly,
+  LightBlur, MiddleBlur, HardBlur,
   Rain_1, Rain_2, Rain_3, Rain_4,
   Snow_1,
+  Sunshine_1,
   Synthway_day, Synthway_night
 }
 
@@ -68,8 +69,14 @@ function getPipeline(animation: BackgroundAnimation) {
   const RAIN_BACKGROUND_SPEED = 5.0;
 
   switch (animation) {
-    case BackgroundAnimation.BlurOnly:
+    case BackgroundAnimation.LightBlur:
       return [dualKawaseBlur({ radius: 1, passes: 2 })];
+
+    case BackgroundAnimation.MiddleBlur:
+      return [dualKawaseBlur({ radius: 2, passes: 3 })];
+
+    case BackgroundAnimation.HardBlur:
+      return [dualKawaseBlur({ radius: 3, passes: 3 })];
 
     case BackgroundAnimation.Rain_1:
       return [
@@ -140,9 +147,9 @@ function getPipeline(animation: BackgroundAnimation) {
             time: clock.time,
             aspect: clock.aspect,
             speed: 10.0,
-            road_color:    [0.35, 0.30, 0.45],
-            sky_color:     [0.45, 0.55, 0.95],
-            sun_color:     [1.00, 0.85, 0.55],
+            road_color: [0.35, 0.30, 0.45],
+            sky_color: [0.45, 0.55, 0.95],
+            sun_color: [1.00, 0.85, 0.55],
             horizon_color: [1.00, 0.65, 0.75],
           },
         }),
@@ -155,16 +162,15 @@ function getPipeline(animation: BackgroundAnimation) {
             time: clock.time,
             aspect: clock.aspect,
             speed: 10.0,
-            road_color:    [0.70, 0.05, 0.85],
-            sky_color:     [0.161, 0.067, 0.678],
-            sun_color:     [1.00, 0.8, 1.0],
+            road_color: [0.70, 0.05, 0.85],
+            sky_color: [0.161, 0.067, 0.678],
+            sun_color: [1.00, 0.8, 1.0],
             horizon_color: [0.161, 0.067, 0.678],
           },
         }),
       ];
     case BackgroundAnimation.Snow_1:
       return [
-        // Необязательно: лёгкий блюр для смягчения обоев
         dualKawaseBlur({ radius: 1, passes: 2 }),
         shaderStage(loadShader("./src/shaders/background/snow/1.frag"), {
           uniforms: {
@@ -173,6 +179,19 @@ function getPipeline(animation: BackgroundAnimation) {
             speed: 1.0,
             snow_amount: 1.0,
             wind_strength: 0.5,
+          },
+        }),
+      ];
+    case BackgroundAnimation.Sunshine_1:
+      return [
+        shaderStage(loadShader("./src/shaders/background/sunshine/1.frag"), {
+          uniforms: {
+            time: clock.time,
+            aspect: clock.aspect,
+            light_position: [-0.1, 1.1],
+            flare_intensity: 0.5,
+            speed: 0.2,
+            flicker_intensity: 1.0,
           },
         }),
       ];

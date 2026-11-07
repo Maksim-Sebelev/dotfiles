@@ -19,8 +19,8 @@ enum Preset {
   Ulya_winter_snow,
   Lena,
   Alisa,
-  Miku,
-  Handle,
+  Miku_from_bus,
+  TheOtherOne,
 };
 
 function applyOutlookPreset(preset: Preset): OutlookConfig {
@@ -32,6 +32,7 @@ function applyOutlookPreset(preset: Preset): OutlookConfig {
         terminalBackground: TerminalBackgroundAnimation.Rain_3,
         popup: PopupAnimation.Nothing,
       }
+
     case Preset.Ulya_winter_snow:
       return {
         bar: Bar.ShojiBar2,
@@ -40,6 +41,20 @@ function applyOutlookPreset(preset: Preset): OutlookConfig {
         popup: PopupAnimation.Nothing,
       }
 
+    case Preset.Miku_from_bus:
+      return {
+        bar: Bar.ShojiBar2,
+        background: BackgroundAnimation.Sunshine_1,
+        terminalBackground: TerminalBackgroundAnimation.Nothing,
+        popup: PopupAnimation.Nothing,
+      }
+    case Preset.TheOtherOne:
+      return {
+        bar: Bar.ShojiBar2,
+        background: BackgroundAnimation.Snow_1,
+        terminalBackground: TerminalBackgroundAnimation.LightBlur,
+        popup: PopupAnimation.Nothing,
+      }
     default:
       console.error(`Undefined preset value`);
       break;
@@ -52,6 +67,6 @@ function applyOutlookPreset(preset: Preset): OutlookConfig {
   }
 }
 
-initAll(applyOutlookPreset(Preset.Slavya_lake_rain));
+initAll(applyOutlookPreset(Preset.TheOtherOne));
 
 export default COMPOSITOR;
