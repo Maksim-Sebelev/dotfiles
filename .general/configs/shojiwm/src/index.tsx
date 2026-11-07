@@ -1,6 +1,6 @@
 import { COMPOSITOR } from "shoji_wm";
 import { initAll } from "./settings/init";
-import { OutlookConfig } from "./settings/visual-effects-config";
+import { type OutlookConfig } from "./settings/visual-effects-config";
 import {
   BackgroundAnimation,
 } from "./settings/visual-effects/background-animation";
@@ -16,7 +16,8 @@ import {
 
 enum Preset {
   Slavya_lake_rain,
-  Ulya_winter_snow,
+  Slavya_winter,
+  Ulya_winter,
   Lena,
   Alisa,
   Miku_from_bus,
@@ -33,10 +34,18 @@ function applyOutlookPreset(preset: Preset): OutlookConfig {
         popup: PopupAnimation.Nothing,
       }
 
-    case Preset.Ulya_winter_snow:
+    case Preset.Slavya_winter:
       return {
         bar: Bar.ShojiBar2,
-        background: BackgroundAnimation.Snow_1,
+        background: BackgroundAnimation.Snow_with_blur_1,
+        terminalBackground: TerminalBackgroundAnimation.Nothing,
+        popup: PopupAnimation.Nothing,
+      }
+
+    case Preset.Ulya_winter:
+      return {
+        bar: Bar.ShojiBar2,
+        background: BackgroundAnimation.Snow_with_blur_3,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
       }
@@ -51,7 +60,7 @@ function applyOutlookPreset(preset: Preset): OutlookConfig {
     case Preset.TheOtherOne:
       return {
         bar: Bar.ShojiBar2,
-        background: BackgroundAnimation.Snow_1,
+        background: BackgroundAnimation.Snow_with_blur_1,
         terminalBackground: TerminalBackgroundAnimation.LightBlur,
         popup: PopupAnimation.Nothing,
       }
@@ -61,12 +70,12 @@ function applyOutlookPreset(preset: Preset): OutlookConfig {
   }
   return {
     bar: Bar.ShojiBar2,
-    background: BackgroundAnimation.Snow_1,
+    background: BackgroundAnimation.Snow_with_blur_1,
     terminalBackground: TerminalBackgroundAnimation.Rain_3,
     popup: PopupAnimation.Nothing,
   }
 }
 
-initAll(applyOutlookPreset(Preset.TheOtherOne));
+initAll(applyOutlookPreset(Preset.Ulya_winter));
 
 export default COMPOSITOR;

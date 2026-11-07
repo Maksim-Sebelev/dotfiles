@@ -14,7 +14,8 @@ export enum BackgroundAnimation {
   Nothing,
   LightBlur, MiddleBlur, HardBlur,
   Rain_1, Rain_2, Rain_3, Rain_4,
-  Snow_1,
+  Snow_with_blur_1, Snow_with_blur_2, Snow_with_blur_3,
+  Snow_without_blur_1, Snow_without_blur_2, Snow_without_blur_3,
   Sunshine_1,
   Synthway_day, Synthway_night
 }
@@ -169,7 +170,45 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
-    case BackgroundAnimation.Snow_1:
+    case BackgroundAnimation.Snow_without_blur_1:
+      return [
+        shaderStage(loadShader("./src/shaders/background/snow/1.frag"), {
+          uniforms: {
+            time: clock.time,
+            aspect: clock.aspect,
+            speed: 1.0,
+            snow_amount: 1.0,
+            wind_strength: 0.5,
+          },
+        }),
+      ];
+    case BackgroundAnimation.Snow_without_blur_2:
+      return [
+        shaderStage(loadShader("./src/shaders/background/snow/2.frag"), {
+          uniforms: {
+            time: clock.time,
+            aspect: clock.aspect,
+            speed: 1.0,
+            snow_amount: 1.0,
+            wind_strength: 0.5,
+            snow_opacity: 1.0,
+          },
+        }),
+      ];
+    case BackgroundAnimation.Snow_without_blur_3:
+      return [
+        shaderStage(loadShader("./src/shaders/background/snow/3.frag"), {
+          uniforms: {
+            time: clock.time,
+            aspect: clock.aspect,
+            speed: 1.0,
+            snow_amount: 1.0,
+            wind_strength: 0.5,
+            snow_opacity: 1.0,
+          },
+        }),
+      ];
+    case BackgroundAnimation.Snow_with_blur_1:
       return [
         dualKawaseBlur({ radius: 1, passes: 2 }),
         shaderStage(loadShader("./src/shaders/background/snow/1.frag"), {
@@ -182,14 +221,42 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
+    case BackgroundAnimation.Snow_with_blur_2:
+      return [
+        dualKawaseBlur({ radius: 1, passes: 2 }),
+        shaderStage(loadShader("./src/shaders/background/snow/2.frag"), {
+          uniforms: {
+            time: clock.time,
+            aspect: clock.aspect,
+            speed: 1.0,
+            snow_amount: 1.0,
+            wind_strength: 0.5,
+            snow_opacity: 1.0,
+          },
+        }),
+      ];
+    case BackgroundAnimation.Snow_with_blur_3:
+      return [
+        dualKawaseBlur({ radius: 1, passes: 2 }),
+        shaderStage(loadShader("./src/shaders/background/snow/3.frag"), {
+          uniforms: {
+            time: clock.time,
+            aspect: clock.aspect,
+            speed: 1.0,
+            snow_amount: 1.2,
+            wind_strength: 0.5,
+            snow_opacity: 1.2,
+          },
+        }),
+      ];
     case BackgroundAnimation.Sunshine_1:
       return [
         shaderStage(loadShader("./src/shaders/background/sunshine/1.frag"), {
           uniforms: {
             time: clock.time,
             aspect: clock.aspect,
-            light_position: [-0.1, 1.1],
-            flare_intensity: 0.5,
+            light_position: [-0.05, 1.05],
+            flare_intensity: 0.6,
             speed: 0.2,
             flicker_intensity: 1.0,
           },
