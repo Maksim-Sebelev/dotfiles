@@ -46,7 +46,6 @@ export function initPrimaryState() {
   launchOnWorkspace("Terminal-at-startup-2", "kitty", 2, "kitty", true);
   launchOnWorkspace("firefox-at-start", "firefox", 3, "firefox");
   launchOnWorkspace("Telegram-at-start", "Telegram", 4, "telegram");
-  launchOnWorkspace("happ-at-startup", "happ", 10, "happ");
 }
 
 const MOVED_STARTUP_WINDOWS = new Set<string>();
