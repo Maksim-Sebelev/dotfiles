@@ -261,6 +261,22 @@ window.Bar {
     background: $accent-color;
   }
 
+  SetupButton {
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s ease;
+  
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  
+    &.pressed {
+      background: #your_accent_color;
+    }
+  }
+
   // System tray. Wrapped in a gray semi-transparent rounded box so it reads as
   // a tray. When there are 0 items, SystemTray.tsx sets visible=false.
   SystemTray {

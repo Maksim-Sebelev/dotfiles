@@ -1,0 +1,23 @@
+theme = "modus_vivendi_tritanopia"
+
+[editor]
+line-number = "relative"
+mouse = false
+bufferline = "multiple"
+cursorline = true
+auto-save = true
+auto-format = false
+indent-guides.render = true
+clipboard-provider = "wayland"
+
+[editor.file-picker]
+hidden = false
+
+[editor.lsp]
+display-messages = true
+
+[editor.cursor-shape]
+insert = "bar"
+normal = "block"
+select = "underline"
+

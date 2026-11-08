@@ -14,7 +14,7 @@ import {
   type ClipboardAction,
 } from "./widget/ClipboardMenu"
 import { ClockMenuLayer } from "./widget/ClockMenu"
-import { WallpaperBackground, WallpaperLayer } from "./widget/Wallpaper"
+import { SetupLayer } from "./widget/Setup"
 import { DockWindow } from "./widget/Dock"
 import { MonitorIdentifyLayer } from "./widget/MonitorIdentify"
 import { SnapPreviewLayer } from "./widget/SnapPreview"
@@ -57,11 +57,10 @@ app.start({
       <For each={monitors}>{createWindow}</For>
     )
 
-    mount((monitor) => <WallpaperBackground gdkmonitor={monitor} />)
     mount((monitor) => <StartMenuLayer gdkmonitor={monitor} />)
     mount((monitor) => <ClipboardMenuLayer gdkmonitor={monitor} />)
     mount((monitor) => <ClockMenuLayer gdkmonitor={monitor} />)
-    mount((monitor) => <WallpaperLayer gdkmonitor={monitor} />)
+    mount((monitor) => <SetupLayer gdkmonitor={monitor} />)
     mount((monitor) => <StatusMenuLayer gdkmonitor={monitor} />)
     mount((monitor) => <NotifPopupLayer gdkmonitor={monitor} />)
     mount((monitor) => <Bar gdkmonitor={monitor} />)

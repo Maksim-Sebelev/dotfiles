@@ -6,6 +6,7 @@ import { ClockButton } from "./ClockMenu"
 import { Workspaces } from "./Workspaces"
 import { LayoutMode } from "./LayoutMode"
 import { WallpaperButton } from "./Wallpaper"
+import { SetupButton } from "./Setup"
 import { StatusButton } from "./StatusMenu"
 import { BatteryButton } from "./Battery"
 import { CpuButton, MemoryButton } from "./SystemUsage"
@@ -78,7 +79,7 @@ export default function Bar({ gdkmonitor }: { gdkmonitor: Gdk.Monitor }) {
         <box $type="end">
           <CpuButton />
           <MemoryButton />
-          <WallpaperButton gdkmonitor={gdkmonitor} />
+          <SetupButton gdkmonitor={gdkmonitor} />
           <StatusButton gdkmonitor={gdkmonitor} />
           <BatteryButton />
         </box>
