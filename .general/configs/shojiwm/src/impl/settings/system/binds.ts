@@ -22,7 +22,7 @@ export function initBinds(wm: HybridWindowManager, schedule: () => void) {
   });
   
   COMPOSITOR.key.bind("dolphin", "Super+E", () => {
-    COMPOSITOR.process.spawn({ command: "dolphin" });
+    COMPOSITOR.process.spawn({ command: "kitty yazi" });
   });
   
   COMPOSITOR.key.bind("mpc-toggle", "Alt+O", () => {

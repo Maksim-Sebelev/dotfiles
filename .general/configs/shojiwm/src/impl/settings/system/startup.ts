@@ -46,6 +46,7 @@ export function initPrimaryState() {
   launchOnWorkspace("Terminal-at-startup-2", "kitty", 2, "kitty", true);
   launchOnWorkspace("firefox-at-start", "firefox", 3, "firefox");
   launchOnWorkspace("Telegram-at-start", "Telegram", 4, "telegram");
+  launchOnWorkspace("ncmpcpp-at-start", "kitty ncmpcpp", 9, "kitty");
 }
 
 const MOVED_STARTUP_WINDOWS = new Set<string>();
