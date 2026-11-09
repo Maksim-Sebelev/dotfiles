@@ -9,8 +9,6 @@ import {
 import type { LayerEffectHandle } from "shoji_wm/types";
 import { acquireClock } from "./../system/animation-clock";
 
-const clock = acquireClock();
-
 export enum TerminalBackgroundAnimation {
   Nothing,
   LightBlur, MiddleBlur, HardBlur,
@@ -20,6 +18,7 @@ export enum TerminalBackgroundAnimation {
 interface WindowInstance {
   animation: TerminalBackgroundAnimation;
   effect: LayerEffectHandle;
+  clock: ReturnType<typeof acquireClock>;
 }
 
 const windowInstances = new Map<string, WindowInstance>();
@@ -31,17 +30,29 @@ export function terminalBackgroundAnimation(
   let instance = windowInstances.get(window.id);
   if (instance && instance.animation !== animation) {
     instance.effect.dispose?.();
+    instance.clock.release();
     windowInstances.delete(window.id);
     instance = undefined;
   }
   if (!instance) {
-    instance = { animation, effect: createEffect(animation) };
+    // Получаем имя монитора, на котором сейчас находится окно
+    const outputName = window.output.peek() ?? "eDP-1";
+    const clock = acquireClock(outputName);
+    
+    instance = { 
+      animation, 
+      effect: createEffect(animation, clock),
+      clock
+    };
     windowInstances.set(window.id, instance);
   }
   return instance.effect;
 }
 
-function createEffect(animation: TerminalBackgroundAnimation): LayerEffectHandle {
+function createEffect(
+  animation: TerminalBackgroundAnimation,
+  clock: ReturnType<typeof acquireClock>
+): LayerEffectHandle {
   if (animation === TerminalBackgroundAnimation.Nothing) {
     return compileEffect({
       input: backdropSource(),
@@ -57,13 +68,16 @@ function createEffect(animation: TerminalBackgroundAnimation): LayerEffectHandle
     capturePadding: 24,
     invalidate: { kind: "always" },
     alpha: "opaque",
-    pipeline: getPipeline(animation),
+    pipeline: getPipeline(animation, clock),
   });
 }
 
 // ----------------------------------------------------------------------------
 
-function getPipeline(animation: TerminalBackgroundAnimation) {
+function getPipeline(
+  animation: TerminalBackgroundAnimation,
+  clock: ReturnType<typeof acquireClock>
+) {
   const RAIN_WINDOW_SPEED = 5.0;
   const RAIN_WINDOW_ANGLE_DEG = 15;
 
@@ -157,9 +171,9 @@ function getPipeline(animation: TerminalBackgroundAnimation) {
 }
 
 export function disposeTerminalBackgroundAnimation() {
-  clock.release();
   for (const instance of windowInstances.values()) {
     instance.effect.dispose?.();
+    instance.clock.release();
   }
   windowInstances.clear();
 }
@@ -168,6 +182,7 @@ export function disposeWindowAnimation(windowId: string) {
   const instance = windowInstances.get(windowId);
   if (instance) {
     instance.effect.dispose?.();
+    instance.clock.release();
     windowInstances.delete(windowId);
   }
 }

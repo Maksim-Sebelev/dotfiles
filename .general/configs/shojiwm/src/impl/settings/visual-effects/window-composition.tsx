@@ -1,13 +1,3 @@
-// Window composition: рисует окно с титлбаром, кнопками и рамкой.
-//
-// COMPOSITOR.window.composition вызывается для каждого окна. Возвращает
-// JSX-дерево: титлбар (appIcon + label + кнопки) + ClientWindow (клиентская
-// поверхность). Для терминалов (kitty/ghostty) добавляется shader-фон
-// через terminalBackgroundAnimation.
-//
-// ВАЖНО: файл должен быть .tsx (JSX-синтаксис), иначе Deno-парсер
-// ShojiWM не сможет его скомпилировать.
-
 import {
   AppIcon,
   Box,
@@ -21,8 +11,6 @@ import {
   ManagedWindow,
   computed,
   read,
-  shaderStage,
-  loadShader,
   ShaderEffect,
   type SSDStyle,
   type WaylandWindow,
@@ -32,7 +20,7 @@ import type { CompositionRenderable } from "shoji_wm/types";
 import {
   terminalBackgroundAnimation,
   TerminalBackgroundAnimation,
-} from "./terminal-background-animation.ts";
+} from "./terminal-background-animation";
 import type { HybridWindowManager } from "../system/window-manager";
 import {
   WINDOW_BORDER_PX,
@@ -46,13 +34,13 @@ import {
   WINDOW_STATE_WORKSPACE_VISIBLE,
   WINDOW_STATE_WORKSPACE_OFFSET_Y,
   WINDOW_STATE_WORKSPACE_OPACITY,
-} from "../system/window-manager.ts";
+} from "../system/window-manager";
 import {
   CloseButton,
   MaximizeButton,
   MinimizeButton,
-} from "./window-buttons.tsx";
-import { type OutlookConfig } from "../visual-effects-config.ts";
+} from "./window-buttons";
+import { type OutlookConfig } from "../visual-effects-config";
 
 const FULLSCREEN_Z_INDEX = 2_000_000_000;
 

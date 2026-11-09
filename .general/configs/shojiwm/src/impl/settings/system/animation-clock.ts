@@ -1,6 +1,6 @@
 import {
   COMPOSITOR,
-  createPoll,
+  createPollForEachOutput,
   signal,
   type PollHandle,
 } from "shoji_wm";
@@ -8,31 +8,45 @@ import {
 const POLL_INTERVAL_MS = 16;
 const TIME_WRAP_SECONDS = 600;
 
-const [timeSig, setTime] = signal(0);
-const [aspectSig, setAspect] = signal(16 / 9);
+interface ClockInstance {
+  time: ReturnType<typeof signal<number>>;
+  aspect: ReturnType<typeof signal<number>>;
+  refCount: number;
+}
 
+const clocksByOutput = new Map<string, ClockInstance>();
 let poll: PollHandle | null = null;
-let pollLastNowMs: number | null = null;
-let refCount = 0;
 
-export function acquireClock(): {
-  time: typeof timeSig;
-  aspect: typeof aspectSig;
+export function acquireClock(outputName: string): {
+  time: ClockInstance["time"];
+  aspect: ClockInstance["aspect"];
   release: () => void;
 } {
-  refCount++;
+  let clock = clocksByOutput.get(outputName);
+  if (!clock) {
+    clock = {
+      time: signal(0),
+      aspect: signal(16 / 9),
+      refCount: 0,
+    };
+    clocksByOutput.set(outputName, clock);
+  }
+  clock.refCount++;
   ensurePoll();
 
   let released = false;
   return {
-    time: timeSig,
-    aspect: aspectSig,
+    time: clock.time,
+    aspect: clock.aspect,
     release() {
       if (released) return;
       released = true;
-      refCount--;
-      if (refCount <= 0) {
-        stopPoll();
+      clock!.refCount--;
+      if (clock!.refCount <= 0) {
+        clocksByOutput.delete(outputName);
+        if (clocksByOutput.size === 0) {
+          stopPoll();
+        }
       }
     },
   };
@@ -40,31 +54,28 @@ export function acquireClock(): {
 
 function ensurePoll() {
   if (poll && !poll.cancelled) return;
-  pollLastNowMs = null;
-  poll = createPoll(POLL_INTERVAL_MS, tick);
+  poll = createPollForEachOutput(
+    POLL_INTERVAL_MS,
+    (handle, outputName) => {
+      const clock = clocksByOutput.get(outputName);
+      if (!clock) return;
+
+      clock.time.set((handle.nowMs / 1000) % TIME_WRAP_SECONDS);
+
+      const out = COMPOSITOR.output.get(outputName);
+      if (out?.resolution && out?.scale) {
+        const w = out.resolution.width / out.scale;
+        const h = out.resolution.height / out.scale;
+        if (h > 0) clock.aspect.set(w / h);
+      }
+    },
+    { dirty: "none" },
+  );
 }
 
 function stopPoll() {
   if (poll && !poll.cancelled) {
-    poll.cancelled = true; // или poll.cancel?.() — зависит от API
+    poll.cancel();
   }
   poll = null;
-  pollLastNowMs = null;
-}
-
-function tick(handle: PollHandle) {
-  const nowMs = handle.nowMs;
-  pollLastNowMs = nowMs;
-
-  setTime((nowMs / 1000) % TIME_WRAP_SECONDS);
-
-  const outputs = COMPOSITOR.output.list;
-  if (outputs.length > 0) {
-    const out = COMPOSITOR.output.get(outputs[0]);
-    if (out && out.resolution && out.scale) {
-      const w = out.resolution.width / out.scale;
-      const h = out.resolution.height / out.scale;
-      if (h > 0) setAspect(w / h);
-    }
-  }
 }

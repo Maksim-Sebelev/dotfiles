@@ -2,12 +2,11 @@ import { COMPOSITOR } from "shoji_wm";
 import {
   backgroundAnimation,
   BackgroundAnimation,
-} from "./background-animation.ts";
+} from "./background-animation";
 import {
   popupAnimation,
-  PopupAnimation,
-} from "./popup-animation.ts";
-import { type OutlookConfig } from "../visual-effects-config.ts";
+} from "./popup-animation";
+import { type OutlookConfig } from "../visual-effects-config";
 
 export function initEffectRouter(config: OutlookConfig): void {
   COMPOSITOR.effect.layer = (layer) => {
@@ -29,12 +28,7 @@ export function initEffectRouter(config: OutlookConfig): void {
     return {};
   };
 
-  // -------------------------------------------------------------------------
-  // Popup effects: blur за меню и тултипами.
-  // -------------------------------------------------------------------------
   COMPOSITOR.effect.popup = (popup) => {
-    // Попапы, привязанные к окну, не трогаем: у окна может быть своя
-    // логика, и попап внутри окна не должен обрезаться размытием.
     if (popup.parentKind === "window") {
       return {};
     }

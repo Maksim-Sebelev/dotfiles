@@ -1,12 +1,3 @@
-// Window lifecycle events: open, first commit, close, focus.
-//
-// Обрабатывает события жизненного цикла окон и делегирует их
-// HybridWindowManager. Дополнительно:
-//   - onFirstCommit запускает maybeMoveStartupWindow (переносит окна,
-//     запущенные при старте, на их целевые воркспейсы).
-//   - scheduleBroadcast вызывается, чтобы бар получил актуальный
-//     список окон/воркспейсов.
-
 import { COMPOSITOR } from "shoji_wm";
 import type { HybridWindowManager } from "./window-manager";
 import { maybeMoveStartupWindow } from "./startup";

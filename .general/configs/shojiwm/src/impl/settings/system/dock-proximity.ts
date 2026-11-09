@@ -1,14 +1,3 @@
-// Dock proximity detection.
-//
-// Следит за курсором и сообщает, находится ли он в «зоне дока» —
-// нижней полосе экрана. У бара это триггерит показ/скрытие дока.
-//
-// Две зоны с гистерезисом:
-//   - SHOW: 10px от низа — чтобы док появился
-//   - HIDE: 120px от низа — чтобы док скрылся (когда уже открыт)
-// Это даёт точный триггер «дотянуться до дока», но не мигает,
-// когда курсор на пару десятков пикселей выше тела дока.
-
 import { COMPOSITOR } from "shoji_wm";
 
 const DOCK_SHOW_ZONE_PX = 10;
@@ -56,8 +45,6 @@ function nextDockProximity(
 ): boolean {
   if (!onTrackedMonitor) return false;
   const wasInside = dockProximityByMonitor.get(monitor) === true;
-  // Пока снаружи — только узкая зона SHOW (10px).
-  // Пока внутри — широкая зона HIDE (120px), чтобы док не мигал.
   return pointerInBottomStrip(
     monitor,
     pointerX,
@@ -76,15 +63,6 @@ function updateDockProximity(monitor: string, inside: boolean): void {
   }
 }
 
-/**
- * Вызывается из обработчика onPointerMove. Обновляет proximity для
- * всех мониторов, но «активен» только тот, на котором сейчас курсор.
- *
- * @param pointerX глобальная X-координата курсора
- * @param pointerY глобальная Y-координата курсора
- * @param activeMonitor имя монитора, на котором сейчас курсор
- *                      (event.outputName), или undefined
- */
 export function updateDockProximityForPointer(
   pointerX: number,
   pointerY: number,

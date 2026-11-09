@@ -10,7 +10,7 @@ export interface RectAnimationOptions {
     suppressSSDRebuild?: boolean;
 }
 
-const lastRectAnimationTargetByWindow = new WeakMap<WaylandWindow, Map<symbol, ManagedWindowRect>>();
+const lastRectAnimationTargetByWindow = new WeakMap<WaylandWindow, Map<WindowStateKey<ManagedWindowRect>, ManagedWindowRect>>();
 
 function rectAnimationChannel(windowRectState: WindowStateKey<ManagedWindowRect>): string {
     return `rect:${windowRectState.description ?? "anon"}`;
@@ -32,7 +32,10 @@ function sameRect(a: ManagedWindowRect, b: ManagedWindowRect): boolean {
         && read(a.height) === read(b.height);
 }
 
-function lastRectTarget(window: WaylandWindow, windowRectState: WindowStateKey<ManagedWindowRect>): ManagedWindowRect | undefined {
+function lastRectTarget(
+    window: WaylandWindow, 
+    windowRectState: WindowStateKey<ManagedWindowRect>
+): ManagedWindowRect | undefined {
     return lastRectAnimationTargetByWindow.get(window)?.get(windowRectState);
 }
 
@@ -65,19 +68,11 @@ export function playRectAnimation(
     const from = snapshotRect(window.state[windowRectState]());
     const target = snapshotRect(to);
 
-    // Layout/focus updates can ask for the same target repeatedly while Rust is
-    // already interpolating toward it. Re-scheduling the same channel in that
-    // case races with focus-driven reevaluations and can leave one window using
-    // an older animated rect for a frame. Treat rect animation requests as
-    // idempotent at the declarative target level.
     const previousTarget = lastRectTarget(window, windowRectState);
     if (previousTarget && sameRect(previousTarget, target) && sameRect(from, target)) {
         return;
     }
 
-    // TS keeps the declarative target. Rust owns the frame-by-frame visual
-    // interpolation and falls back to this target when the scheduled animation
-    // finishes or is cancelled.
     window.state[windowRectState].set(target);
     setLastRectTarget(window, windowRectState, target);
     window.scheduleAnimation({

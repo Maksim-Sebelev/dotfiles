@@ -1,9 +1,3 @@
-// Compositor-level events: gestures, output changes, layer create/update/destroy.
-//
-// Эти события не связаны с конкретным окном, но влияют на layout
-// (usable area, workspace tiling). WM должен их знать, а бар — получать
-// обновления через scheduleBroadcast.
-
 import { COMPOSITOR } from "shoji_wm";
 import type { HybridWindowManager } from "./window-manager";
 

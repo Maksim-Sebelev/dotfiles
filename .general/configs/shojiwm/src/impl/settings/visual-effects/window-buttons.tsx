@@ -1,8 +1,3 @@
-// Window titlebar buttons: close, maximize/restore, minimize.
-//
-// Все три — небольшие кнопки 16x16 со скруглением и иконкой,
-// которая появляется при hover. Используются в window-composition.
-
 import {
   Box,
   Button,

@@ -8,8 +8,6 @@ import {
 import type { LayerEffectHandle } from "shoji_wm/types";
 import { acquireClock } from "./../system/animation-clock";
 
-const clock = acquireClock();
-
 export enum BackgroundAnimation {
   Nothing,
   LightBlur, MiddleBlur, HardBlur,
@@ -25,6 +23,7 @@ export enum BackgroundAnimation {
 interface BackgroundInstance {
   animation: BackgroundAnimation;
   effect: LayerEffectHandle;
+  clock: ReturnType<typeof acquireClock>;
 }
 
 const instances = new Map<string, BackgroundInstance>();
@@ -36,11 +35,17 @@ export function backgroundAnimation(
   let instance = instances.get(outputName);
   if (instance && instance.animation !== animation) {
     instance.effect.dispose?.();
+    instance.clock.release();
     instances.delete(outputName);
     instance = undefined;
   }
   if (!instance) {
-    instance = { animation, effect: createInstance(outputName, animation) };
+    const clock = acquireClock(outputName);
+    instance = { 
+      animation, 
+      effect: createInstance(outputName, animation, clock), 
+      clock 
+    };
     instances.set(outputName, instance);
   }
   return instance.effect;
@@ -49,6 +54,7 @@ export function backgroundAnimation(
 function createInstance(
   _outputName: string,
   animation: BackgroundAnimation,
+  clock: ReturnType<typeof acquireClock>,
 ): LayerEffectHandle {
   if (animation === BackgroundAnimation.Nothing) {
     return compileLayerEffect({
@@ -63,11 +69,14 @@ function createInstance(
     input: layerSource(),
     invalidate: { kind: "always" },
     alpha: "opaque",
-    pipeline: getPipeline(animation),
+    pipeline: getPipeline(animation, clock),
   });
 }
 
-function getPipeline(animation: BackgroundAnimation) {
+function getPipeline(
+  animation: BackgroundAnimation,
+  clock: ReturnType<typeof acquireClock>
+) {
   const RAIN_BACKGROUND_ANGLE_DEG = 15;
   const RAIN_BACKGROUND_SPEED = 5.0;
 
@@ -172,6 +181,7 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
+      
     case BackgroundAnimation.Snow_without_blur_1:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/snow/1.frag"), {
@@ -184,6 +194,7 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
+      
     case BackgroundAnimation.Snow_without_blur_2:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/snow/2.frag"), {
@@ -197,6 +208,7 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
+      
     case BackgroundAnimation.Snow_without_blur_3:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/snow/3.frag"), {
@@ -210,6 +222,7 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
+      
     case BackgroundAnimation.Snow_with_blur_1:
       return [
         dualKawaseBlur({ radius: 1, passes: 2 }),
@@ -223,6 +236,7 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
+      
     case BackgroundAnimation.Snow_with_blur_2:
       return [
         dualKawaseBlur({ radius: 1, passes: 2 }),
@@ -237,6 +251,7 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
+      
     case BackgroundAnimation.Snow_with_blur_3:
       return [
         dualKawaseBlur({ radius: 1, passes: 2 }),
@@ -251,6 +266,7 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
+      
     case BackgroundAnimation.Sunshine_1:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/sunshine/1.frag"), {
@@ -264,6 +280,7 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
+      
     case BackgroundAnimation.Sunshine_2:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/sunshine/1.frag"), {
@@ -277,6 +294,7 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
+      
     case BackgroundAnimation.Plasma:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/plasma/1.frag"), {
@@ -290,6 +308,7 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
+      
     case BackgroundAnimation.Bubbles:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/bubbles/1.frag"), {
@@ -304,19 +323,17 @@ function getPipeline(animation: BackgroundAnimation) {
           },
         }),
       ];
-  default:
+      
+    default:
       console.warn(`No shader for animation ${animation}`);
       return [];
   }
 }
 
-// ---------------------------------------------------------------------------
-// Dispose
-// ---------------------------------------------------------------------------
 export function disposeBackgroundAnimation() {
-  clock.release();
   for (const instance of instances.values()) {
     instance.effect.dispose?.();
+    instance.clock.release();
   }
   instances.clear();
 }

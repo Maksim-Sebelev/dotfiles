@@ -1,14 +1,3 @@
-// External IPC: expose the workspace layout to clients such as the bar.
-//
-//   workspaces.get           -> WorkspacesView                     (request/response)
-//   workspaces.switch        { direction: -1 | 1 }                 (command)
-//   workspaces.activate      { monitor: string, index: number }    (command)
-//   workspaces.toggleTiling  { monitor?: string }                  (command)
-//   workspaces.changed       -> WorkspacesView                     (broadcast)
-//   windows.activate         { windowId: string }                  (command)
-//   dock.proximity           { monitor: string, inside: bool }     (broadcast)
-//   snap.preview             { monitor, rect, kind }               (broadcast)
-
 import { COMPOSITOR } from "shoji_wm";
 import { createIpcServer } from "shoji_wm/ipc";
 import type { HybridWindowManager } from "./window-manager";
@@ -32,21 +21,10 @@ function reconfigureProtocolWorkspaces(): void {
   COMPOSITOR.workspace.reconfigure();
 }
 
-/**
- * Coalesce many state mutations within one tick into a single diffed broadcast.
- *
- * Каждое workspace-level изменение (переключение, скролл, tiling, окна
- * появляются/уходят) проходит через эту функцию — это единственная точка,
- * где нужно будить симуляцию (воду/чернила), если она есть.
- */
 export function makeScheduleWorkspaceBroadcast(
   wm: HybridWindowManager,
 ): () => void {
   return () => {
-    // waterWake(); // если вернёшь воду
-    // Протокол workspace state должен быть staged до того, как текущий
-    // runtime-ответ будет записан; иначе бинды/Waybar-активации достигнут
-    // бара только на следующем запросе.
     reconfigureProtocolWorkspaces();
     if (workspaceBroadcastQueued) {
       return;
@@ -131,7 +109,6 @@ export function initIpc(wm: HybridWindowManager): {
   return { scheduleBroadcast };
 }
 
-/** Broadcast dock proximity change to the bar. */
 export function broadcastDockProximity(
   monitor: string,
   inside: boolean,
@@ -139,12 +116,10 @@ export function broadcastDockProximity(
   WORKSPACE_IPC.broadcast("dock.proximity", { monitor, inside });
 }
 
-/** Broadcast snap preview change to the bar. */
 export function broadcastSnapPreview(preview: unknown): void {
   WORKSPACE_IPC.broadcast("snap.preview", preview);
 }
 
-/** Close IPC server. Вызывается из COMPOSITOR.onDisable. */
 export function closeIpc(): void {
   WORKSPACE_IPC.close();
 }

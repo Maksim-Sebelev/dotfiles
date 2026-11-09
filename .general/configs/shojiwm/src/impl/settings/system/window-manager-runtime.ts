@@ -1,14 +1,3 @@
-// Window manager instance + naturalRootRect + hot-reload state.
-//
-// initHybridWindowManager():
-//   - создаёт HybridWindowManager с naturalRootRect;
-//   - подписывается на COMPOSITOR.onDisable / onEnable для сохранения
-//     и восстановления snapshot'а при hot reload;
-//   - возвращает готовый инстанс.
-//
-// Возвращаемый WM используется другими модулями (ipc, window-events,
-// window-requests, compositor-events, window-composition).
-
 import {
   COMPOSITOR,
   type WaylandWindow,
@@ -18,7 +7,7 @@ import {
   HybridWindowManager,
   TITLEBAR_HEIGHT,
   WINDOW_BORDER_PX,
-} from "./window-manager.ts";
+} from "./window-manager";
 
 const HOT_RELOAD_STATE_KEY = "config.hybrid-window-manager";
 

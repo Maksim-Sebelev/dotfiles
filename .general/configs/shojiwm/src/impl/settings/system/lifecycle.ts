@@ -1,4 +1,3 @@
-// settings/system/lifecycle.ts
 import { COMPOSITOR } from "shoji_wm";
 import { disposeTerminalBackgroundAnimation } from "../visual-effects/terminal-background-animation.tsx";
 import { closeIpc } from "./ipc.ts";
