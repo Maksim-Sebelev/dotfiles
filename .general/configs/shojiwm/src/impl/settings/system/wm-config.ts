@@ -16,29 +16,12 @@ export enum WindowSwitcherStyle {
  * looks). Read once in `init.ts` via `OutlookConfig.windowManager`.
  */
 export interface WindowManagerConfig {
-  /**
-   * Three-finger swipe / wheel / kinetic-scroll tuning for tiled workspaces.
-   * Passed straight to `HybridWindowManager.configureWorkspaceGestureSpeed`.
-   * Omit to keep the WM's built-in defaults.
-   */
   gestureSpeed?: WorkspaceGestureSpeedConfig;
-
-  /**
-   * When `Super+H` / `Super+L` (`focusTile(±1)`) is pressed and the active
-   * tile sticks out of the screen on the side the focus key is heading,
-   * the key pans that tile fully into view instead of advancing to the
-   * neighbour. Moving on happens on the next press, once the window is
-   * within the screen. Defaults to `true` (the upstream behaviour).
-   *
-   * Overflow on the opposite side never blocks: fixing it would scroll
-   * against the pressed direction, so the key advances as usual.
-   */
   focusPansIntoView?: boolean;
-
-  /**
-   * Which window switcher `Super+Tab` opens. Defaults to `Flip3D`.
-   */
+  /** Style for `Super+Tab`. Defaults to `Flip3D`. */
   windowSwitcher?: WindowSwitcherStyle;
+  /** Style for the secondary switcher keybind. Defaults to `Grid`. */
+  secondaryWindowSwitcher?: WindowSwitcherStyle;
 }
 
 export const DEFAULT_WM_CONFIG: Required<
@@ -54,4 +37,5 @@ export const DEFAULT_WM_CONFIG: Required<
   },
   focusPansIntoView: true,
   windowSwitcher: WindowSwitcherStyle.Flip3D, 
+  secondaryWindowSwitcher: WindowSwitcherStyle.Grid,
 };

@@ -2,7 +2,12 @@ import { COMPOSITOR } from "shoji_wm";
 import type { HybridWindowManager } from "./window-manager";
 import type { WindowSwitcher } from "../visual-effects/window-switcher";
 
-export function initBinds(wm: HybridWindowManager, schedule: () => void, windowSwitcher: WindowSwitcher) {
+export function initBinds(
+  wm: HybridWindowManager,
+  schedule: () => void,
+  windowSwitcher: WindowSwitcher,
+  secondaryWindowSwitcher: WindowSwitcher,
+) {
 
   // COMPOSITOR.pointer.bindWindowMoveModifier("Super");
   // COMPOSITOR.pointer.bindWindowResizeModifier("Super");
@@ -193,7 +198,10 @@ export function initBinds(wm: HybridWindowManager, schedule: () => void, windowS
     COMPOSITOR.debug.enableProfile(profileEnabled);
   });
 
-  COMPOSITOR.key.bind("window-switcher", "Super+Tab", () => {
+  COMPOSITOR.key.bind("window-switcher", "Super+grave", () => {
     windowSwitcher.open(wm.getCurrentMonitorName());
+  });
+  COMPOSITOR.key.bind("window-grid", "Super+Tab", () => {
+    secondaryWindowSwitcher.open(wm.getCurrentMonitorName());
   });
 }

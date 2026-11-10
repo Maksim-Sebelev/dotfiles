@@ -21,10 +21,10 @@ export function initInput(wm: HybridWindowManager) {
         repeatRate: 25,
         repeatDelay: 250,
       },
-      trackball: {
-        naturalScroll: true,
-        scrollFactor: 0.3,
-      },
+      // trackball: {
+      //   naturalScroll: true,
+      //   scrollFactor: 0.3,
+      // },
     };
   });
 

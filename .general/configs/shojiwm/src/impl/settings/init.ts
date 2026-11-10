@@ -49,10 +49,17 @@ export function initAll(config: OutlookConfig): void {
   }
   wm.setFocusPansIntoView(wmConfig.focusPansIntoView ?? true);
 
-  // Window switcher (Super+Tab). Created here, passed to
-  // initWindowComposition so the composition can render it.
   const windowSwitcher: WindowSwitcher = createWindowSwitcherForConfig(
     wmConfig.windowSwitcher ?? WindowSwitcherStyle.Flip3D,
+    {
+      windowManager: wm,
+      stackOrder: (window) => windowZIndex(window, wm),
+      titlebarButtonAt: (window, x, y) => titlebarButtonAt(window, x, y),
+    },
+  );
+
+  const secondaryWindowSwitcher: WindowSwitcher = createWindowSwitcherForConfig(
+    wmConfig.secondaryWindowSwitcher ?? WindowSwitcherStyle.Grid,
     {
       windowManager: wm,
       stackOrder: (window) => windowZIndex(window, wm),
@@ -71,11 +78,11 @@ export function initAll(config: OutlookConfig): void {
   initPrimaryState();
   initBar(config);
   initCliphist();
-  initBinds(wm, scheduleBroadcast, windowSwitcher);
+  initBinds(wm, scheduleBroadcast, windowSwitcher, secondaryWindowSwitcher);
 
   initInput(wm);
   initDecoration();
 
   initEffectRouter(config);
-  initWindowComposition(wm, config, windowSwitcher);
+  initWindowComposition(wm, config, windowSwitcher, secondaryWindowSwitcher);
 }

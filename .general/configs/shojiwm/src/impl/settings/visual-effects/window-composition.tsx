@@ -144,12 +144,41 @@ export function initWindowComposition(
   wm: HybridWindowManager,
   config: OutlookConfig,
   windowSwitcher: WindowSwitcher,
+  secondaryWindowSwitcher: WindowSwitcher,
 ): void {
-  const backdropFade = () => shaderStage(loadShader("./src/impl/shaders/common/backdrop-fade.frag"), {
-    uniforms: { strength: windowSwitcher.backdropStrength },
-  });
+  // --- Combined signals across both switchers ---------------------------
+  // Only one switcher can be open at a time (input grab is global), but the
+  // composition must react to whichever one is. Taking `min` of the two
+  // backdrop strengths means: if either switcher has suspended its backdrop
+  // (strength 0), the faded blur stays off until both are closed and both
+  // have faded back in.
+  const blurSuspendedCombined = computed(
+    () =>
+      windowSwitcher.blurSuspended() ||
+      secondaryWindowSwitcher.blurSuspended(),
+  );
+  const selectedWindowIdCombined = computed(
+    () =>
+      windowSwitcher.selectedWindowId() ??
+      secondaryWindowSwitcher.selectedWindowId(),
+  );
+  const backdropStrengthCombined = computed(() =>
+    Math.min(
+      windowSwitcher.backdropStrength(),
+      secondaryWindowSwitcher.backdropStrength(),
+    ),
+  );
+
+  const backdropFade = () =>
+    shaderStage(
+      loadShader("./src/impl/shaders/common/backdrop-fade.frag"),
+      { uniforms: { strength: backdropStrengthCombined } },
+    );
+
   COMPOSITOR.rendering.composition = (output) =>
-    windowSwitcher.compose(output) ?? <DefaultComposition />;
+    windowSwitcher.compose(output)
+    ?? secondaryWindowSwitcher.compose(output)
+    ?? <DefaultComposition />;
 
   COMPOSITOR.window.composition = (window: WaylandWindow) => {
     const useClientDecoration = usesClientDecoration(window.decoration());
@@ -169,23 +198,24 @@ export function initWindowComposition(
     const forceRectSize = computed(
       () => window.isResizable() && !window.isTransient(),
     );
-    
+
     // force no corner rounding CSD
     const tiled = true;
-    
+
     const zIndex = computed(() => windowZIndex(window, wm));
     const minimizeVisualIdle = window.state[WINDOW_STATE_MINIMIZE_VISUAL_IDLE];
     const inactive = computed(
       () => minimizeVisualIdle() || (!workspaceVisible() && !tileDragging()),
     );
-    
+
     const borderColor = window.isFocused((focused) =>
       focused ? "#d7ba7d" : "#4f5666",
     );
-    // A soft drop shadow under the frame; the focused window floats a bit higher.
-    // The window selected in the window switcher glows white instead.
+    // A soft drop shadow under the frame; the focused window floats a bit
+    // higher. The window selected in either switcher glows white instead
+    // (it fits in the switcher's texture margin).
     const windowShadow = computed(() =>
-      windowSwitcher.selectedWindowId() === window.id
+      selectedWindowIdCombined() === window.id
         ? [{ blur: 28, spread: 4, color: "#ffffffd0" }]
         : window.isFocused()
           ? [{ y: 10, blur: 32, spread: -2, color: "#00000090" }]
@@ -197,7 +227,7 @@ export function initWindowComposition(
     const titleColor = window.isFocused((focused) =>
       focused ? "#f5f7fa" : "#c9d1d9",
     );
-    
+
     const titlebarStyle: SSDStyle = {
       height: TITLEBAR_HEIGHT,
       paddingX: TITLEBAR_PADDING_X,
@@ -205,8 +235,7 @@ export function initWindowComposition(
       alignItems: "center",
       background: titlebarBackground,
     };
-    
-  
+
     const titleOnlyShader = compileEffect({
       input: backdropSource(),
       capturePadding: 24,
@@ -214,9 +243,9 @@ export function initWindowComposition(
       alpha: "preserve",
       pipeline: [dualKawaseBlur({ radius: 4, passes: 2 }), backdropFade()],
     });
-    
-    const blurSuspended = windowSwitcher.blurSuspended();
-    
+
+    const blurSuspended = blurSuspendedCombined();
+
     const appIcon = (
       <AppIcon icon={window.icon} style={{ width: 16, height: 16 }} />
     );
@@ -237,7 +266,7 @@ export function initWindowComposition(
     const minimizeButton = <MinimizeButton window={window} />;
     const maximizeButton = <MaximizeButton window={window} />;
     const closeButton = <CloseButton window={window} />;
-    
+
     const titlebarContent = [
       appIcon,
       label,
@@ -263,18 +292,18 @@ export function initWindowComposition(
         <ClientWindow />
       </Box>
     );
-    
+
     const TERMINALS = ["kitty", "ghostty"];
-    
+
     if (
       TERMINALS.includes(window.appId() ?? "") &&
       config.terminalBackground !== TerminalBackgroundAnimation.Nothing
     ) {
-      // `terminalBackgroundAnimation` reads `backdropSource()` under the hood,
-      // which is empty inside the switcher's render texture - the terminal
-      // would render black there. Skip the effect while the switcher is open
-      // and let it come back when the switcher closes, the same way
-      // `titleOnlyShader` is suspended.
+      // `terminalBackgroundAnimation` reads `backdropSource()` under the
+      // hood, which is empty inside the switcher's render texture - the
+      // terminal would render black there. Skip the effect while either
+      // switcher is open and let it come back when they close, the same
+      // way `titleOnlyShader` is suspended.
       innerComponents = blurSuspended ? (
         <Box direction="column">
           <Box direction="row" style={titlebarStyle}>
@@ -298,7 +327,8 @@ export function initWindowComposition(
       );
     }
 
-    // Fullscreen: drop all chrome and let the client surface fill its managed rect.
+    // Fullscreen: drop all chrome and let the client surface fill its
+    // managed rect edge to edge.
     if (window.state[WINDOW_STATE_FULLSCREEN]()) {
       return (
         <ManagedWindow
@@ -316,7 +346,7 @@ export function initWindowComposition(
         </ManagedWindow>
       );
     }
-    
+
     // use less Server-Side Decoration
     if (useClientDecoration) {
       return (
@@ -352,7 +382,7 @@ export function initWindowComposition(
         </ManagedWindow>
       );
     }
-    
+
     // use full Server-Side Decoration
     return (
       <ManagedWindow
@@ -387,191 +417,4 @@ export function initWindowComposition(
       </ManagedWindow>
     );
   };
-  // const titleOnlyShader = compileEffect({
-  //   input: backdropSource(),
-  //   capturePadding: 24,
-  //   invalidate: { kind: "on-source-damage-box", damagePadding: 8 },
-  //   pipeline: [dualKawaseBlur({ radius: 4, passes: 2 })],
-  // });
-
-  // COMPOSITOR.window.composition = (window: WaylandWindow) => {
-  //   const decoration = window.decoration();
-  //   const useClientDecoration =
-  //     decoration.mode === "client" &&
-  //     !(
-  //       decoration.clientPreference === "server" &&
-  //       decoration.configuredMode === "server"
-  //     );
-  //   const workspaceVisible = window.state[WINDOW_STATE_WORKSPACE_VISIBLE];
-  //   const workspaceOffsetY = window.state[WINDOW_STATE_WORKSPACE_OFFSET_Y];
-  //   const workspaceOpacity = window.state[WINDOW_STATE_WORKSPACE_OPACITY];
-  //   const tileDragging = window.state[WINDOW_STATE_TILE_DRAGGING];
-
-  //   const managedRect = computed(() => {
-  //     const rect = window.state[WINDOW_STATE_RECT]();
-  //     return {
-  //       x: read(rect.x),
-  //       y: read(rect.y) + workspaceOffsetY(),
-  //       width: read(rect.width),
-  //       height: read(rect.height),
-  //     };
-  //   });
-  //   const forceRectSize = computed(
-  //     () => window.isResizable() && !window.isTransient(),
-  //   );
-  //   const tiled = computed(
-  //     () => window.appId() === "mpv" || window.state[WINDOW_STATE_TILED](),
-  //   );
-  //   const minimizeVisualIdle = window.state[WINDOW_STATE_MINIMIZE_VISUAL_IDLE];
-  //   const inactive = computed(
-  //     () => minimizeVisualIdle() || (!workspaceVisible() && !tileDragging()),
-  //   );
-
-  //   const borderColor = window.isFocused((focused) =>
-  //     focused ? "#d7ba7d" : "#4f5666",
-  //   );
-  //   const titlebarBackground = window.isFocused((focused) =>
-  //     focused ? "#1f243080" : "#2a2f3a80",
-  //   );
-  //   const titleColor = window.isFocused((focused) =>
-  //     focused ? "#f5f7fa" : "#c9d1d9",
-  //   );
-
-  //   const titlebarStyle: SSDStyle = {
-  //     height: TITLEBAR_HEIGHT,
-  //     paddingX: 8,
-  //     gap: 8,
-  //     alignItems: "center",
-  //     background: titlebarBackground,
-  //   };
-
-  //   const appIcon = (
-  //     <AppIcon icon={window.icon} style={{ width: 16, height: 16 }} />
-  //   );
-  //   const label = (
-  //     <Label
-  //       text={window.title}
-  //       style={{
-  //         color: titleColor,
-  //         fontFamily: ["Noto Sans CJK JP", "Noto Color Emoji"],
-  //         fontSize: 13,
-  //         fontWeight: 600,
-  //         flexGrow: 1,
-  //         flexShrink: 1,
-  //         minWidth: 0,
-  //       }}
-  //     />
-  //   );
-  //   const minimizeButton = <MinimizeButton window={window} />;
-  //   const maximizeButton = <MaximizeButton window={window} />;
-  //   const closeButton = <CloseButton window={window} />;
-
-  //   var innerComponents: CompositionRenderable = (
-  //     <Box direction="column">
-  //       <ShaderEffect
-  //         shader={titleOnlyShader}
-  //         direction="row"
-  //         style={titlebarStyle}
-  //       >
-  //         {appIcon}
-  //         {label}
-  //         {minimizeButton}
-  //         {maximizeButton}
-  //         {closeButton}
-  //       </ShaderEffect>
-  //       <ClientWindow />
-  //     </Box>
-  //   );
-
-  //   if (
-  //     TERMINALS.includes(window.appId() ?? "") &&
-  //     config.terminalBackground !== TerminalBackgroundAnimation.Nothing
-  //   ) {
-  //     innerComponents = (
-  //       <ShaderEffect
-  //         shader={terminalBackgroundAnimation(
-  //           window,
-  //           config.terminalBackground,
-  //         )}
-  //         direction="column"
-  //       >
-  //         <Box direction="row" style={titlebarStyle}>
-  //           {appIcon}
-  //           {label}
-  //           {minimizeButton}
-  //           {maximizeButton}
-  //           {closeButton}
-  //         </Box>
-  //         <ClientWindow />
-  //       </ShaderEffect>
-  //     );
-  //   }
-
-  //   if (window.state[WINDOW_STATE_FULLSCREEN]()) {
-  //     return (
-  //       <ManagedWindow
-  //         rect={managedRect}
-  //         zIndex={FULLSCREEN_Z_INDEX}
-  //         visibleOutputs={window.state[WINDOW_STATE_VISIBLE_OUTPUTS]}
-  //         opacity={workspaceOpacity}
-  //         forceRectSize={forceRectSize}
-  //         tiled={tiled}
-  //         idle={inactive}
-  //         interactive={inactive((value) => !value)}
-  //         allowTearing={true}
-  //       >
-  //         <ClientWindow />
-  //       </ManagedWindow>
-  //     );
-  //   }
-
-  //   if (useClientDecoration) {
-  //     return (
-  //       <ManagedWindow
-  //         rect={managedRect}
-  //         zIndex={wm.getWindowZIndex(window)}
-  //         visibleOutputs={window.state[WINDOW_STATE_VISIBLE_OUTPUTS]}
-  //         opacity={workspaceOpacity}
-  //         forceRectSize={forceRectSize}
-  //         tiled={tiled}
-  //         idle={inactive}
-  //         interactive={inactive((value) => !value)}
-  //       >
-  //         <ClientWindow />
-  //       </ManagedWindow>
-  //     );
-  //   }
-
-  //   return (
-  //     <ManagedWindow
-  //       rect={managedRect}
-  //       zIndex={wm.getWindowZIndex(window)}
-  //       visibleOutputs={window.state[WINDOW_STATE_VISIBLE_OUTPUTS]}
-  //       opacity={workspaceOpacity}
-  //       forceRectSize={forceRectSize}
-  //       tiled={tiled}
-  //       idle={inactive}
-  //       interactive={inactive((value) => !value)}
-  //     >
-  //       <WindowBorder
-  //         style={{
-  //           border: { px: WINDOW_BORDER_PX, color: borderColor },
-  //           borderRadius: 10,
-  //           background: "#10131900",
-  //           padding: 0,
-  //           paddingX: 0,
-  //           paddingRight: 0,
-  //         }}
-  //         interaction={{
-  //           resizeHitArea: {
-  //             edgePx: 8,
-  //             cornerPx: 14,
-  //           },
-  //         }}
-  //       >
-  //         <Box direction="row">{innerComponents}</Box>
-  //       </WindowBorder>
-  //     </ManagedWindow>
-  //   );
-  // };
 }

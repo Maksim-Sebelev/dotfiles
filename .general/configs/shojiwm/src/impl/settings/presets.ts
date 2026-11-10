@@ -130,7 +130,6 @@ export function getConfig(preset: Preset): OutlookConfig {
             workspaceScrollSnapMaxVelocity: 300,
             workspaceScrollSnapBreakoutPx: 48,
           },
-          windowSwitcher: WindowSwitcherStyle.Grid,
         },
       }
 
