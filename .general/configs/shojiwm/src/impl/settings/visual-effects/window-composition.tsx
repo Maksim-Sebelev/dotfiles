@@ -51,8 +51,8 @@ import {
 } from "./window-buttons";
 import { type OutlookConfig } from "../visual-effects-config";
 import {
- type WindowSwitcher,
- type TitlebarButton,
+  type WindowSwitcher,
+  type TitlebarButton,
 } from "./window-switcher"
 
 const FULLSCREEN_Z_INDEX = 2_000_000_000;
@@ -293,10 +293,12 @@ export function initWindowComposition(
       </Box>
     );
 
-    const TERMINALS = ["kitty", "ghostty"];
+    const isTerminal = (appId: string | undefined): boolean =>
+    (appId !== undefined &&
+      appId.includes("kitty"));
 
     if (
-      TERMINALS.includes(window.appId() ?? "") &&
+      isTerminal(window.appId()) &&
       config.terminalBackground !== TerminalBackgroundAnimation.Nothing
     ) {
       // `terminalBackgroundAnimation` reads `backdropSource()` under the

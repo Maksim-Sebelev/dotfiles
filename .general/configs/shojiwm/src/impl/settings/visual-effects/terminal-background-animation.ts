@@ -5,6 +5,7 @@ import {
   loadShader,
   shaderStage,
   type WaylandWindow,
+  COMPOSITOR,
 } from "shoji_wm";
 import type { CompiledEffectHandle } from "shoji_wm/types";
 import { acquireClock } from "./../system/animation-clock";
@@ -34,7 +35,28 @@ export function terminalBackgroundAnimation(
     instance = undefined;
   }
   if (!instance) {
-    const outputName = window.output.peek() ?? "eDP-1";
+    const outputName = (() => {
+      // Prefer the output the window is actually on (by its centre), since
+      // `window.output` may still be stale on the first render of a new window.
+      const rect = window.rect;
+      const cx = rect.x + rect.width / 2;
+      const cy = rect.y + rect.height / 2;
+      for (const name of COMPOSITOR.output.list) {
+        const out = COMPOSITOR.output.get(name);
+        if (!out?.resolution) continue;
+        const w = out.resolution.width / out.scale;
+        const h = out.resolution.height / out.scale;
+        if (
+          cx >= out.position.x &&
+          cx < out.position.x + w &&
+          cy >= out.position.y &&
+          cy < out.position.y + h
+        ) {
+          return name;
+        }
+      }
+      return window.output.peek() ?? "eDP-1";
+    })();
     const clock = acquireClock(outputName);
     
     instance = { 
@@ -182,3 +204,9 @@ export function disposeWindowAnimation(windowId: string) {
     windowInstances.delete(windowId);
   }
 }
+
+COMPOSITOR.onDisable((event) => {
+  if (event.isReloading) {
+    disposeTerminalBackgroundAnimation();
+  }
+});
