@@ -42,35 +42,28 @@ export function initPrimaryState() {
     runPolicy: "once-per-session",
   });
   
-  launchOnWorkspace("Terminal-at-startup-1", "kitty", 1, "kitty", true);
-  launchOnWorkspace("Terminal-at-startup-2", "kitty", 2, "kitty", true);
   launchOnWorkspace("firefox-at-start", "firefox", 3, "firefox");
   launchOnWorkspace("Telegram-at-start", "Telegram", 4, "telegram");
-  launchOnWorkspace("ncmpcpp-at-start", "kitty ncmpcpp", 9, "kitty");
+
+  launchOnWorkspace("Terminal-at-startup-1", "kitty --class kitty-1", 1, "kitty-1", true);
+  launchOnWorkspace("Terminal-at-startup-2", "kitty --class kitty-2", 2, "kitty-2", true);
+  launchOnWorkspace("ncmpcpp-at-start", "kitty --class kitty-ncmpcpp ncmpcpp", 9, "kitty-ncmpcpp");
 }
 
 const MOVED_STARTUP_WINDOWS = new Set<string>();
 
-export function maybeMoveStartupWindow(
-    wm: HybridWindowManager,
-    schedule: () => void,
-    window: WaylandWindow
-  ) {
+export function maybeMoveStartupWindow(wm: HybridWindowManager, schedule: () => void, window: WaylandWindow) {
   const id = window.id;
-  if (MOVED_STARTUP_WINDOWS.has(id)) {
-    return;
-  }
+  if (MOVED_STARTUP_WINDOWS.has(id)) { return; }
   const appId = window.appId();
-  if (!appId) {
-    return;
-  }
+  if (!appId) { return; }
   const lower = appId.toLowerCase();
 
   for (const [matcher, queue] of MULTI_INSTANCE_QUEUES) {
     if (lower.includes(matcher) && queue.length > 0) {
       const target = queue.shift()!;
       MOVED_STARTUP_WINDOWS.add(id);
-      wm.moveFocusedWindowToWorkspace(target);
+      wm.moveWindowToWorkspace(window, wm.getCurrentMonitorName(), target);  // ← новое
       schedule();
       return;
     }
@@ -80,7 +73,7 @@ export function maybeMoveStartupWindow(
     if (lower.includes(matcher)) {
       STARTUP_WORKSPACE_TARGETS.delete(matcher);
       MOVED_STARTUP_WINDOWS.add(id);
-      wm.moveFocusedWindowToWorkspace(target);
+      wm.moveWindowToWorkspace(window, wm.getCurrentMonitorName(), target);  // ← новое
       schedule();
       return;
     }

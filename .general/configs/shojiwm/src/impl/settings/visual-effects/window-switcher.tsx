@@ -64,7 +64,7 @@ import {
 } from "../system/window-manager";
 
 /** Opening and closing, in ms. */
-const TRANSITION_MS = 450;
+const TRANSITION_MS = 240;
 /** The blur fading back in after closing, in ms. */
 const BLUR_FADE_MS = 350;
 /** Room around each window's texture for its shadow (logical px). */

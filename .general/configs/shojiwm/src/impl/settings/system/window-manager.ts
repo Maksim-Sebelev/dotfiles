@@ -407,7 +407,7 @@ export class HybridWindowManager {
   private readonly presentedWindowIds = new Set<string>();
   
   /**
-   * When each window was last restored from minimized, by wall clock.
+   * When each window was last retored from minimized, by wall clock.
    *
    * Docks/taskbars may send `unset_minimized` and `activate` as separate
    * requests in one flush. By the time the activate handler runs, the
@@ -481,6 +481,14 @@ export class HybridWindowManager {
     this.currentMonitor = "";
     this.naturalRootRect = naturalRootRect;
     this.syncWorkspaces();
+  }
+
+  public moveWindowToWorkspace(
+    window: WaylandWindow,
+    monitor: string,
+    index: number,
+  ): boolean {
+    return this.forceMoveWindowToWorkspace(window, monitor, index);
   }
 
   public configureWorkspaceGestureSpeed(
@@ -891,26 +899,6 @@ export class HybridWindowManager {
       );
       workspace.restore(workspaceSnapshot);
     }
-
-    this.pendingPlacements = snapshot.windowPlacements ?? [];
-    this.pendingPlacementWindowIds.clear();
-    for (const placement of this.pendingPlacements) {
-      this.pendingPlacementWindowIds.add(placement.windowId);
-    }
-
-    if (this.placementRestoreTimerId !== null) {
-      clearTimeout(this.placementRestoreTimerId);
-      this.placementRestoreTimerId = null;
-    }
-    if (this.pendingPlacements.length > 0) {
-      this.placementRestoreTimerId = setTimeout(() => {
-        this.placementRestoreTimerId = null;
-        hotReloadDebug("hybrid-restore-timeout", {
-          remaining: Array.from(this.pendingPlacementWindowIds),
-        });
-        this.applyPendingPlacements();
-      }, PLACEMENT_RESTORE_TIMEOUT_MS);
-    }
   }
 
   private applyPendingPlacements() {
@@ -982,7 +970,6 @@ export class HybridWindowManager {
     if (fromWorkspace.monitor === monitor && fromWorkspace.index === index) {
       return true;
     }
-
     const targetWorkspace = this.ensureWorkspace(monitor, index);
     const moved = fromWorkspace.takeWindowForMove(window);
     if (!moved) {
@@ -2496,17 +2483,24 @@ export class HybridWindowManager {
     return undefined;
   }
 
-  private findWorkspaceRestoringWindow(
-    window: WaylandWindow,
-  ): Workspace | undefined {
-    for (const workspace of this.workspaces.values()) {
-      if (workspace.isRestoringWindow(window.id)) {
-        return workspace;
-      }
+  // private findWorkspaceRestoringWindow(
+  //   window: WaylandWindow,
+  // ): Workspace | undefined {
+  //   for (const workspace of this.workspaces.values()) {
+  //     if (workspace.isRestoringWindow(window.id)) {
+  //       return workspace;
+  //     }
+  //   }
+  //   return undefined;
+  // }
+private findWorkspaceRestoringWindow(window: WaylandWindow): Workspace | undefined {
+  for (const workspace of this.workspaces.values()) {
+    if (workspace.isRestoringWindow(window.id)) {
+      return workspace;
     }
-    return undefined;
   }
-
+  return undefined;
+}
   private workspaceForTileDrag(
     event: WindowMoveEvent,
     drag: NonNullable<HybridWindowManager["tileDrag"]>,
