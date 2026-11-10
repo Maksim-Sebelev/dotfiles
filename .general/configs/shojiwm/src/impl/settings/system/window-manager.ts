@@ -3,6 +3,7 @@ import {
   createWindowState,
   cubicBezier,
   createPoll,
+  dropWindowState,
   markManagedWindowDirty,
   markWindowDirty,
   read,
@@ -89,9 +90,24 @@ export const WINDOW_STATE_TILE_DRAGGING = createWindowState<boolean>(
     default: false,
   },
 );
-export const WINDOW_STATE_TILED = createWindowState<boolean>("tiled", {
-  default: false,
-});
+export const WINDOW_STATE_TILE_REORDERING = createWindowState<boolean>(
+  "tileReordering",
+  {
+    default: false,
+  },
+);
+export const WINDOW_STATE_TILED = createWindowState<boolean>(
+  "tiled",
+  {
+    default: false,
+  }
+);
+export const WINDOW_STATE_WORKSPACE_TILED = createWindowState<boolean>(
+  "workspaceTiled",
+  {
+    default: false
+  },
+);
 export const WINDOW_STATE_VISIBLE_OUTPUTS = createWindowState<string[] | null>(
   "visibleOutputs",
   {
@@ -119,7 +135,7 @@ const OPEN_CLOSE_ANIMATION_DURATION = seconds(0.5);
 const INITIAL_TILEABILITY_SETTLE_DURATION = seconds(1);
 const WINDOW_MANAGEMENT_ANIMATION_DURATION = seconds(0.3);
 const UNMAXIMIZE_GRAB_ANIMATION_DURATION = 90;
-const WINDOW_MANAGEMENT_EASING = cubicBezier(0.1, 0.9, 0.2, 1.0);
+export const WINDOW_MANAGEMENT_EASING = cubicBezier(0.1, 0.9, 0.2, 1.0);
 const WINDOW_OPEN_EASING = cubicBezier(0.1, 1.1, 0.1, 1.1);
 const WINDOW_CLOSE_EASING = cubicBezier(0.3, -0.3, 0, 1);
 const WINDOW_MINIMIZE_RECT_EASING = cubicBezier(0.3, -0.3, 0, 1);
@@ -143,6 +159,9 @@ const TILE_GAP = 12;
 const TILE_MARGIN = 12;
 const TILE_WIDTH_RATIO = 0.5;
 const TILE_MIN_WIDTH = 240;
+// Fractional-scale rounding can leave a tile a hair past the screen edge;
+// overflow at or below this is "fully visible" for the focus-key pan step.
+const TILE_FOCUS_OVERFLOW_EPSILON = 1;
 const MANAGED_WINDOW_ONLY_REBUILD_SUPPRESSION = {
   allowManagedWindowOnly: true,
   onViolation: "fallback-last",
@@ -292,6 +311,8 @@ export interface WorkspaceGestureSpeedConfig {
   workspaceScrollKineticFactor?: number;
   workspaceSwitchFactor?: number;
   workspaceSwitchVelocityFactor?: number;
+  workspaceScrollSnapMaxVelocity?: number;
+  workspaceScrollSnapBreakoutPx?: number;
 }
 
 interface ResolvedWorkspaceGestureSpeedConfig {
@@ -299,6 +320,8 @@ interface ResolvedWorkspaceGestureSpeedConfig {
   workspaceScrollKineticFactor: number;
   workspaceSwitchFactor: number;
   workspaceSwitchVelocityFactor: number;
+  workspaceScrollSnapMaxVelocity?: number;
+  workspaceScrollSnapBreakoutPx?: number;
 }
 
 const DEFAULT_WORKSPACE_GESTURE_SPEED: ResolvedWorkspaceGestureSpeedConfig = {
@@ -306,6 +329,8 @@ const DEFAULT_WORKSPACE_GESTURE_SPEED: ResolvedWorkspaceGestureSpeedConfig = {
   workspaceScrollKineticFactor: 1,
   workspaceSwitchFactor: 1,
   workspaceSwitchVelocityFactor: 1,
+  workspaceScrollSnapMaxVelocity: 300,
+  workspaceScrollSnapBreakoutPx: 48,
 };
 
 function hotReloadDebugEnabled(): boolean {
@@ -338,6 +363,15 @@ function sanitizeGestureSpeedFactor(
   return value;
 }
 
+function sanitizeGestureThreshold(
+  value: number | undefined,
+  fallback: number,
+): number {
+  if (value === undefined) return fallback;
+  if (!Number.isFinite(value) || value < 0) return fallback;
+  return value;
+}
+
 const OPEN_ANIMATION_CHANNEL = "window.open";
 const CLOSE_ANIMATION_CHANNEL = "window.close";
 const MINIMIZE_ANIMATION_CHANNEL = "window.minimize";
@@ -352,6 +386,7 @@ export const MAXIMIZED_WINDOW_PADDING = {
   bottom: 8,
   left: 8,
 };
+const RESTORE_ACTIVATE_GRACE_MS = 100;
 
 export class HybridWindowManager {
   private readonly workspaces = new Map<string, Workspace>();
@@ -359,6 +394,31 @@ export class HybridWindowManager {
   private readonly windowStack = createWindowStack();
   private readonly naturalRootRect: (rect: WaylandWindow) => ManagedWindowRect;
   private readonly lastFocusedAt = new Map<string, number>();
+  /**
+   * Windows that have presented at least one frame (`onFirstCommit`).
+   *
+   * A window's foreign-toplevel handle is created the moment the client makes
+   * its `xdg_toplevel` — before it has committed a single buffer — so a dock
+   * that focuses the window it just launched sends its `activate` while the
+   * window is still invisible. Without this set the minimize-raise toggle
+   * would read that launch hand-off as "the user re-clicked the focused
+   * window's taskbar entry" and minimize a window that had never been shown.
+   */
+  private readonly presentedWindowIds = new Set<string>();
+  
+  /**
+   * When each window was last restored from minimized, by wall clock.
+   *
+   * Docks/taskbars may send `unset_minimized` and `activate` as separate
+   * requests in one flush. By the time the activate handler runs, the
+   * unset_minimized has already restored the window, so the `wasMinimized`
+   * guard in `onWindowActivateRequest` sees an unminimized window — and the
+   * minimize-raise toggle would read the activate as "the user re-clicked the
+   * focused window's taskbar entry" and re-minimize it. A restore and an
+   * activate that arrive within the grace period are one gesture.
+   */
+  private readonly lastRestoreAtMs = new Map<string, number>();
+  private instantTransitions = false;
   private readonly pendingInitialFocusByWindowId = new Map<string, number>();
   private readonly tileabilityByWindowId = new Map<string, boolean>();
   private readonly tileabilitySubscriptionsByWindowId = new Map<
@@ -385,7 +445,18 @@ export class HybridWindowManager {
   private workspaceGesture: WorkspaceGestureState | null = null;
   private workspaceGestureMode: WorkspaceGestureMode | null = null;
   private workspaceScrollGestureRectAnimationsCancelled = false;
+  private workspaceScrollSnapLatch: {
+    offset: number;
+    overshoot: number;
+  } | null = null;
+  private workspaceScrollGestureSpeed: number | null = null;
   private workspaceGestureSpeed = { ...DEFAULT_WORKSPACE_GESTURE_SPEED };
+  /**
+   * When `true` (default), `Super+H/L` pans a partially-off-screen active
+   * tile fully into view before advancing to the neighbour. See
+   * `Workspace.panActiveTileIntoView`.
+   */
+  private focusPansIntoView = true;
   private lastPointerPosition: PointerMoveEvent["position"] | null = null;
   private lastPointerTarget: PointerMoveEvent["target"] = { kind: "none" };
   private snapPreviewBroadcaster: SnapPreviewBroadcaster | null = null;
@@ -434,7 +505,22 @@ export class HybridWindowManager {
         config.workspaceSwitchVelocityFactor,
         workspaceSwitchFactor,
       ),
+      workspaceScrollSnapMaxVelocity: sanitizeGestureThreshold(
+        config.workspaceScrollSnapMaxVelocity,
+        DEFAULT_WORKSPACE_GESTURE_SPEED.workspaceScrollSnapMaxVelocity,
+      ),
+      workspaceScrollSnapBreakoutPx: sanitizeGestureSpeedFactor(
+        config.workspaceScrollSnapBreakoutPx,
+        DEFAULT_WORKSPACE_GESTURE_SPEED.workspaceScrollSnapBreakoutPx,
+      ),
     };
+  }
+
+  public setFocusPansIntoView(enabled: boolean): void {
+    this.focusPansIntoView = enabled;
+    for (const workspace of this.workspaces.values()) {
+      workspace.setFocusPansIntoView(enabled);
+    }
   }
 
   public onPointerMove(event: PointerMoveEvent) {
@@ -917,6 +1003,7 @@ export class HybridWindowManager {
   }
 
   public onFirstCommit(window: WaylandWindow) {
+    this.presentedWindowIds.add(window.id);
     if (!this.tileabilityByWindowId.has(window.id)) {
       this.trackWindowTileability(window);
     }
@@ -973,6 +1060,8 @@ export class HybridWindowManager {
   }
 
   public onClose(window: WaylandWindow) {
+    this.presentedWindowIds.delete(window.id);
+    this.lastRestoreAtMs.delete(window.id);
     this.restoredDuringInitialConfigure.delete(window.id);
     this.deferredInitialLayoutWindowIds.delete(window.id);
     this.pendingInitialFocusByWindowId.delete(window.id);
@@ -993,6 +1082,7 @@ export class HybridWindowManager {
       }
     }
     this.syncWorkspaceVisibility();
+    dropWindowState(window.id);
   }
 
   public onFocus(window: WaylandWindow, focused: boolean) {
@@ -1379,6 +1469,7 @@ export class HybridWindowManager {
     if (wasMinimized !== event.minimized) {
       stopRectAnimation(event.window, WINDOW_STATE_RECT);
       if (!event.minimized) {
+        this.lastRestoreAtMs.set(event.window.id, Date.now());
         event.window.state[WINDOW_STATE_MINIMIZE_VISUAL_IDLE].set(false);
       }
       event.window.state[WINDOW_STATE_MINIMIZED].set(event.minimized);
@@ -1386,16 +1477,29 @@ export class HybridWindowManager {
         event.window.state[WINDOW_STATE_MINIMIZE_VISUAL_IDLE].set(true);
       }
       markWindowCompositionDirty(event.window);
-      scheduleMinimizeAnimation(event.window, event.minimized);
+      scheduleMinimizeAnimation(
+        event.window,
+        event.minimized,
+        this.instantTransitions,
+      );
     }
+    const successor =
+      event.minimized && !wasMinimized && event.window.isFocused()
+        ? (workspace?.successorForMinimizedWindow(event.window, (window) =>
+            this.windowStack.zIndexValue(window),
+          ) ?? null)
+        : null;
     if (workspace?.isTiled) {
       if (!event.minimized && workspace.shouldTile(event.window)) {
         workspace.focusWindow(event.window);
+      } else if (successor && workspace.shouldTile(successor)) {
+        workspace.focusWindow(successor);
       } else {
         workspace.applyLayout();
       }
       this.applyWorkspaceStackPolicy(workspace);
     }
+    successor?.focus();
   }
 
   public onWindowActivateRequest(event: WindowActivateRequestEvent) {
@@ -1406,20 +1510,65 @@ export class HybridWindowManager {
         minimized: false,
         source:
           event.source === "xdg-activation" ||
-            event.source === "xwayland" ||
-            event.source === "keybind"
+          event.source === "xwayland" ||
+          event.source === "keybind"
             ? event.source
             : "api",
         timestamp: event.timestamp,
       });
     }
     const workspace = this.findWorkspaceForWindow(event.window);
+    if (
+      !wasMinimized &&
+      event.source !== "xdg-activation" &&
+      event.source !== "xwayland" &&
+      event.source !== "keybind" &&
+      this.minimizeOnReactivate(event.window, workspace)
+    ) {
+      return;
+    }
     if (workspace) {
       this.switchWorkspaceTo(workspace.monitor, workspace.index, {
         focusActiveAfter: false,
       });
     }
     event.window.focus();
+  }
+
+  /**
+   * Minimize-raise toggle: activating the already-focused window from a
+   * dock/taskbar minimizes it instead of re-focusing. Floating workspaces
+   * only, and only when the window is on the visible workspace — activating
+   * a window on another workspace keeps the usual switch+focus. Routed
+   * through `window.minimize()` so every minimize side effect stays
+   * centralized in `onWindowMinimizeRequest`.
+   *
+   * Never fires before the window has presented a frame: that activation is
+   * a dock handing focus to the app it just launched, not the user toggling
+   * a visible window. See `presentedWindowIds`.
+   */
+  private minimizeOnReactivate(
+    window: WaylandWindow,
+    workspace: Workspace | undefined,
+  ): boolean {
+    if (!this.presentedWindowIds.has(window.id)) {
+      return false;
+    }
+    if (!workspace || workspace.isTiled || !workspace.isActive()) {
+      return false;
+    }
+    if (window.state[WINDOW_STATE_MINIMIZED]() || !window.isFocused()) {
+      return false;
+    }
+    const restoredAt = this.lastRestoreAtMs.get(window.id);
+    if (
+      restoredAt !== undefined &&
+      Date.now() - restoredAt <= RESTORE_ACTIVATE_GRACE_MS
+    ) {
+      return false;
+    }
+    window.minimize();
+    return true;
   }
 
   public toggleCurrentWorkspaceTiling() {
@@ -1587,6 +1736,21 @@ export class HybridWindowManager {
     }
   }
 
+  public toggleFocusedWindowFullscreen(): void {
+    for (const workspace of this.workspaces.values()) {
+      const focused = workspace.focusedWindow();
+      if (!focused) {
+        continue;
+      }
+      if (focused.state[WINDOW_STATE_FULLSCREEN]()) {
+        focused.unfullscreen();
+      } else {
+        focused.fullscreen();
+      }
+      return;
+    }
+  }
+
   public refreshUsableAreaLayouts() {
     this.syncWorkspaces();
     if (this.isGrabbing) {
@@ -1610,59 +1774,61 @@ export class HybridWindowManager {
   public switchWorkspaceTo(
     monitor: string,
     targetIndex: number,
-    options: { focusActiveAfter?: boolean } = {},
+    options: { focusActiveAfter?: boolean; instant?: boolean } = {},
   ) {
     this.workspaceGesture = null;
     this.syncWorkspaces();
     if (!monitor || targetIndex < 1) {
       return;
     }
-
+    
     const currentIndex = this.activeWorkspaceByMonitor.get(monitor) ?? 1;
     if (targetIndex === currentIndex) {
       return;
     }
     const direction: -1 | 1 = targetIndex > currentIndex ? 1 : -1;
-
+    
     const fromWorkspace = this.ensureWorkspace(monitor, currentIndex);
     const toWorkspace = this.ensureWorkspace(monitor, targetIndex);
     const distance = this.workspaceTransitionDistance(monitor);
-
+    
     this.activeWorkspaceByMonitor.set(monitor, targetIndex);
     this.currentMonitor = monitor;
-
+    
     for (const workspace of this.workspaces.values()) {
       if (workspace === fromWorkspace || workspace === toWorkspace) {
         continue;
       }
       workspace.setVisible(workspace.isActive());
     }
-
-    fromWorkspace.animateWorkspaceTransition({
-      fromOffsetY: 0,
-      toOffsetY: -direction * distance,
-      fromOpacity: 1,
-      toOpacity: 0,
-      visibleAfter: false,
-    });
-    toWorkspace.prepareWorkspaceTransition(direction * distance, 0);
-    toWorkspace.applyLayout();
-    toWorkspace.animateWorkspaceTransition({
-      fromOffsetY: direction * distance,
-      toOffsetY: 0,
-      fromOpacity: 0,
-      toOpacity: 1,
-      visibleAfter: true,
-    });
+    
+    if (options.instant) {
+      fromWorkspace.showInstantly(false);
+      toWorkspace.showInstantly(true);
+      toWorkspace.applyLayout({ animate: false });
+    } else {
+      fromWorkspace.animateWorkspaceTransition({
+        fromOffsetY: 0,
+        toOffsetY: -direction * distance,
+        fromOpacity: 1,
+        toOpacity: 0,
+        visibleAfter: false,
+      });
+      toWorkspace.prepareWorkspaceTransition(direction * distance, 0);
+      toWorkspace.applyLayout();
+      toWorkspace.animateWorkspaceTransition({
+        fromOffsetY: direction * distance,
+        toOffsetY: 0,
+        fromOpacity: 0,
+        toOpacity: 1,
+        visibleAfter: true,
+      });
+    }
     if (options.focusActiveAfter !== false) {
       toWorkspace.focusActiveWindow();
     }
     this.applyWorkspaceStackPolicy(fromWorkspace);
     this.applyWorkspaceStackPolicy(toWorkspace);
-    this.workspaceTransitionBroadcaster?.({
-      monitor,
-      offsetY: direction * distance,
-    });
     this.workspaceChangeBroadcaster?.();
   }
 
@@ -1792,7 +1958,33 @@ export class HybridWindowManager {
     return windows;
   }
 
-  public activateWindowById(windowId: string): boolean {
+  public listWindowsByRecentUse(): WaylandWindow[] {
+    const lastUse = (window: WaylandWindow) =>
+      read(window.isFocused)
+        ? Number.POSITIVE_INFINITY
+        : (this.lastFocusedAt.get(window.id) ?? 0);
+    return this.listWindows()
+      .map((window, order) => ({ window, order, at: lastUse(window) }))
+      .sort((a, b) => b.at - a.at || a.order - b.order)
+      .map(({ window }) => window);
+  }
+  
+  public isWindowShownOn(window: WaylandWindow, monitor: string): boolean {
+    const workspace = this.findWorkspaceForWindow(window);
+    return (
+      workspace !== undefined &&
+      workspace.monitor === monitor &&
+      workspace.isActive() &&
+      !window.state[WINDOW_STATE_MINIMIZED]()
+    );
+  }
+
+  public activateWindowById(
+    windowId: string,
+    options: {
+      instant?: boolean;
+    } = {},
+  ): boolean {
     const window = this.findWindowById(windowId);
     if (!window) {
       return false;
@@ -1801,24 +1993,33 @@ export class HybridWindowManager {
     if (!workspace) {
       return false;
     }
-
+    const instant = options.instant === true;
+    
     if (window.state[WINDOW_STATE_MINIMIZED]()) {
-      this.onWindowMinimizeRequest({
-        window,
-        minimized: false,
-        source: "api",
-        timestamp: Date.now(),
-      });
+      this.instantTransitions = instant;
+      try {
+        this.onWindowMinimizeRequest({
+          window,
+          minimized: false,
+          source: "api",
+          timestamp: Date.now(),
+        });
+      } finally {
+        this.instantTransitions = false;
+      }
+    } else if (!instant && this.minimizeOnReactivate(window, workspace)) {
+      return true;
     }
-
+    
     this.switchWorkspaceTo(workspace.monitor, workspace.index, {
       focusActiveAfter: false,
+      instant,
     });
-
+    
     if (workspace.isTiled) {
-      workspace.panToWindow(window);
+      workspace.panToWindow(window, { animate: !instant });
     }
-
+    
     window.focus();
     return true;
   }
@@ -1912,6 +2113,7 @@ export class HybridWindowManager {
         (window) => this.maximizedRectForWindow(window, monitor),
         (monitor) => this.getActiveWorkspaceIndex(monitor),
       );
+      workspace.setFocusPansIntoView(this.focusPansIntoView);
       this.workspaces.set(key, workspace);
     }
     return workspace;
@@ -1962,8 +2164,43 @@ export class HybridWindowManager {
 
     this.currentMonitor = monitor;
     workspace.stopKineticScroll();
-    const deltaX =
+    let deltaX =
       -event.deltaX * this.workspaceGestureSpeed.workspaceScrollFactor;
+
+    const eventSpeed =
+      Math.abs(event.velocityX) *
+      this.workspaceGestureSpeed.workspaceScrollFactor;
+    this.workspaceScrollGestureSpeed =
+      this.workspaceScrollGestureSpeed === null
+        ? eventSpeed
+        : this.workspaceScrollGestureSpeed * 0.6 + eventSpeed * 0.4;
+
+    const latch = this.workspaceScrollSnapLatch;
+    if (latch) {
+      latch.overshoot += deltaX;
+      const breakout = this.workspaceGestureSpeed.workspaceScrollSnapBreakoutPx;
+      if (Math.abs(latch.overshoot) <= breakout) {
+        return;
+      }
+      deltaX = latch.overshoot - Math.sign(latch.overshoot) * breakout;
+      this.workspaceScrollSnapLatch = null;
+    }
+
+    const snapMaxVelocity =
+      this.workspaceGestureSpeed.workspaceScrollSnapMaxVelocity;
+    if (
+      this.workspaceScrollSnapLatch === null &&
+      snapMaxVelocity > 0 &&
+      this.workspaceScrollGestureSpeed <= snapMaxVelocity
+    ) {
+      const from = workspace.scrollPosition;
+      const snapOffset = workspace.snapOffsetBetween(from, from + deltaX);
+      if (snapOffset !== null) {
+        deltaX = snapOffset - from;
+        this.workspaceScrollSnapLatch = { offset: snapOffset, overshoot: 0 };
+      }
+    }
+
     const shouldCancelRectAnimations =
       !this.workspaceScrollGestureRectAnimationsCancelled;
     const scrolled = workspace.scrollBy(deltaX, {
@@ -1991,9 +2228,16 @@ export class HybridWindowManager {
       return;
     }
 
+    if (this.workspaceScrollSnapLatch) {
+      this.workspaceScrollSnapLatch = null;
+      this.workspaceScrollGestureSpeed = null;
+      return;
+    }
+    this.workspaceScrollGestureSpeed = null;
+
     workspace.startKineticScroll(
       -event.velocityX *
-      this.workspaceGestureSpeed.workspaceScrollKineticFactor,
+        this.workspaceGestureSpeed.workspaceScrollKineticFactor,
       () => {
         this.focusWindowAtPointerPosition(
           event.position ?? this.lastPointerPosition,
@@ -2001,6 +2245,7 @@ export class HybridWindowManager {
         );
         this.applyWorkspaceStackPolicy(workspace);
       },
+      this.workspaceGestureSpeed.workspaceScrollSnapMaxVelocity,
     );
   }
 
@@ -3196,6 +3441,11 @@ export class Workspace {
 
   private visibilityCommitTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
+  private tileReorderTokenByWindowId = new Map<string, number>();
+  private tileReorderToken = 0;
+
+  private focusPansIntoView = true;
+
   public constructor(
     index: number,
     monitor: string,
@@ -3257,9 +3507,18 @@ export class Workspace {
     }
     const previousActiveWindowId = this.activeWindowId;
     const previousScrollOffset = this.scrollOffset;
-    this.windows.push(window);
+
     const restored = this.restoredWindowStateById.get(window.id);
+    const tileInsertionIndex =
+      !restored && this.isTiled && this.shouldTile(window)
+        ? this.tileInsertionIndexAfterFocusedWindow()
+        : null;
+    this.windows.push(window);
+    if (tileInsertionIndex !== null) {
+      this.moveTileWindowToIndex(window, tileInsertionIndex);
+    }
     const isTileableInCurrentMode = !this.isTiled || this.shouldTile(window);
+
     if (!restored && isTileableInCurrentMode) {
       this.activeWindowId = window.id;
     }
@@ -3368,8 +3627,12 @@ export class Workspace {
   public removeWindow(window: WaylandWindow): WaylandWindow | null | undefined {
     const index = this.windows.findIndex((current) => current.id === window.id);
     if (index >= 0) {
+      const wasTile = this.isTileable(window);
+      const tileIndex = this.tileIndexOf(window.id);
       this.windows.splice(index, 1);
       this.tileWidthByWindowId.delete(window.id);
+      this.tileReorderTokenByWindowId.delete(window.id);
+      window.state[WINDOW_STATE_TILE_REORDERING].set(false);
       this.initialTileStateByWindowId.delete(window.id);
       if (this.draggingWindowId === window.id) {
         this.draggingWindowId = null;
@@ -3377,10 +3640,7 @@ export class Workspace {
       }
       let nextFocus: WaylandWindow | null = null;
       if (this.activeWindowId === window.id) {
-        nextFocus =
-          this.tileableWindows()[
-          Math.min(index, this.tileableWindows().length - 1)
-          ] ?? null;
+        nextFocus = this.successorForRemovedWindow(wasTile, tileIndex);
         this.activeWindowId = nextFocus?.id ?? null;
       }
       return nextFocus;
@@ -3454,11 +3714,25 @@ export class Workspace {
 
     this.stopKineticScroll();
     this.activeWindowId = focused.id;
+    this.markTileReordering(focused);
     this.moveTileWindowToIndex(focused, nextIndex);
     this.scrollToWindow(focused);
     this.applyLayout();
     focused.focus();
     return true;
+  }
+
+  private markTileReordering(window: WaylandWindow): void {
+    const token = ++this.tileReorderToken;
+    this.tileReorderTokenByWindowId.set(window.id, token);
+    window.state[WINDOW_STATE_TILE_REORDERING].set(true);
+    setTimeout(() => {
+      if (this.tileReorderTokenByWindowId.get(window.id) !== token) {
+        return;
+      }
+      this.tileReorderTokenByWindowId.delete(window.id);
+      window.state[WINDOW_STATE_TILE_REORDERING].set(false);
+    }, TILE_ANIMATION_DURATION);
   }
 
   public takeWindowForMove(
@@ -3533,6 +3807,13 @@ export class Workspace {
       window.state[WINDOW_STATE_WORKSPACE_OFFSET_Y].set(0);
       window.state[WINDOW_STATE_WORKSPACE_OPACITY].set(visible ? 1 : 0);
     }
+  }
+  /** `setVisible` that also stops a running workspace slide/fade. */
+  public showInstantly(visible: boolean): void {
+    for (const window of this.windows) {
+      cancelWorkspaceVisualAnimation(window);
+    }
+    this.setVisible(visible);
   }
 
   public prepareWorkspaceTransition(offsetY: number, opacity: number) {
@@ -3747,8 +4028,7 @@ export class Workspace {
 
     const viewportRect = this.tileViewportRect();
     this.lastAppliedTileViewportRect = snapshotManagedRect(viewportRect);
-    const tileHeight = read(viewportRect.height);
-    let nextX = read(viewportRect.x) - this.scrollOffset;
+    let nextX = read(viewportRect.x) - this.physicalAlignedScrollOffset();
     const appliedRects: Record<string, ManagedWindowRect> = {};
     this.lastDraggingSlotRect = null;
 
@@ -3758,12 +4038,7 @@ export class Workspace {
         ? this.fullscreenRootRect(window)
         : window.state[WINDOW_STATE_MAXIMIZED]()
           ? this.maximizedTileRect(window, nextX)
-          : {
-            x: nextX,
-            y: read(viewportRect.y),
-            width: tileWidth,
-            height: tileHeight,
-          };
+          : this.tileRect(window, nextX, tileWidth, viewportRect);
       appliedRects[window.id] = rect;
       if (window.id === this.draggingWindowId) {
         this.lastDraggingSlotRect = rect;
@@ -4093,6 +4368,7 @@ export class Workspace {
   public startKineticScroll(
     initialVelocityX: number,
     onFrame?: () => void,
+    snapMaxVelocity = 0,
   ): void {
     this.stopKineticScroll();
     if (
@@ -4114,6 +4390,19 @@ export class Workspace {
     let firstStep = true;
 
     const step = (dtMs: number): boolean => {
+      if (snapMaxVelocity > 0 && Math.abs(velocityX) <= snapMaxVelocity) {
+        const target = this.kineticSnapTarget();
+        if (target !== null) {
+          this.stopKineticScroll();
+          if (Math.abs(target - this.scrollOffset) > 0.5) {
+            this.scrollOffset = target;
+            this.applyLayout({ preserveMissingActive: true });
+            onFrame?.();
+          }
+          return false;
+        }
+      }
+
       const deltaX = (velocityX * dtMs) / 1000;
       const scrolled = this.scrollBy(deltaX, {
         stopKinetic: false,
@@ -4150,16 +4439,12 @@ export class Workspace {
           }
           return;
         }
-
         const now = handle.nowMs;
-        const dtMs = Math.max(
-          1,
-          lastTime === null ? intervalMs : now - lastTime,
-        );
+        const dtMs = Math.max(1, lastTime === null ? intervalMs : now - lastTime);
         lastTime = now;
         step(dtMs);
       },
-      { output: this.monitor , dirty: "none" }
+      { output: () => this.monitor, dirty: "none" },
     );
   }
 
@@ -4169,6 +4454,65 @@ export class Workspace {
       this.kineticScrollPoll.cancel();
       this.kineticScrollPoll = null;
     }
+  }
+
+  private tileSnapOffsets(): number[] {
+    const tileable = this.tileableWindows();
+    const viewportRect = this.tileViewportRect();
+    const viewportWidth = read(viewportRect.width);
+    const contentWidth = this.tileContentWidth(tileable, viewportRect);
+    const maxScrollOffset = Math.max(0, contentWidth - viewportWidth);
+    const offsets: number[] = [];
+    let left = 0;
+    for (const window of tileable) {
+      const width = this.tileWidthForWindow(window, viewportRect);
+      if (window.state[WINDOW_STATE_MAXIMIZED]()) {
+        offsets.push(left + width / 2 - viewportWidth / 2);
+      } else {
+        offsets.push(left);
+        offsets.push(left + width - viewportWidth);
+      }
+      left += width + TILE_GAP;
+    }
+    const inRange = offsets
+      .filter((offset) => offset > 0.5 && offset < maxScrollOffset - 0.5)
+      .sort((a, b) => a - b);
+    const deduped: number[] = [];
+    for (const offset of inRange) {
+      if (deduped.length === 0 || offset - deduped[deduped.length - 1] > 1) {
+        deduped.push(offset);
+      }
+    }
+    return deduped;
+  }
+
+  /**
+   * First snap offset a scroll from `from` to `to` would cross, or null.
+   * `from` itself is excluded so a scroll resting on a snap position can
+   * move off it.
+   */
+  public snapOffsetBetween(from: number, to: number): number | null {
+    if (to === from) {
+      return null;
+    }
+    const forward = to > from;
+    let best: number | null = null;
+    for (const offset of this.tileSnapOffsets()) {
+      const crossed = forward
+        ? offset > from + 0.5 && offset <= to
+        : offset < from - 0.5 && offset >= to;
+      if (!crossed) {
+        continue;
+      }
+      if (best === null || (forward ? offset < best : offset > best)) {
+        best = offset;
+      }
+    }
+    return best;
+  }
+
+  public get scrollPosition(): number {
+    return this.scrollOffset;
   }
 
   private kineticScrollIntervalMs(): number {
@@ -4186,6 +4530,13 @@ export class Workspace {
     const activeIndex = tileable.findIndex(
       (window) => window.id === this.activeWindowId,
     );
+    if (
+      this.focusPansIntoView &&
+      activeIndex >= 0 &&
+      this.panActiveTileIntoView(tileable, activeIndex, direction)
+    ) {
+      return;
+    }
     const fallbackIndex = this.focusFallbackTileIndex(tileable, direction);
     const currentIndex =
       activeIndex >= 0
@@ -4224,6 +4575,51 @@ export class Workspace {
       direction < 0 ? b.center - a.center : a.center - b.center,
     );
     return candidates[0].index - direction;
+  }
+
+  /**
+   * When the focused tile sticks out of the screen on the side the focus key
+   * is heading, the key press pans the tile fully into view instead of
+   * advancing to the neighbor — moving on only happens once the window is
+   * within the screen. Overflow on the opposite side doesn't block: fixing it
+   * would scroll against the pressed direction, so the key advances as usual.
+   * A tile wider than the screen aligns its near edge first and the next
+   * press advances.
+   *
+   * "Within the screen" is measured against the usable area, not the tile
+   * viewport: the viewport is inset by TILE_MARGIN for cosmetic spacing, and
+   * content inside that margin is still on screen. Maximized tiles in
+   * particular are wider than the viewport by design (MAXIMIZED_WINDOW_PADDING
+   * < TILE_MARGIN), so an inset-viewport check would eat one key press on a
+   * 4px invisible pan for every fully-visible maximized tile.
+   *
+   * @returns `true` if it panned (caller should not advance focus).
+   */
+  private panActiveTileIntoView(
+    tileable: WaylandWindow[],
+    index: number,
+    direction: -1 | 1,
+  ): boolean {
+    const viewportRect = this.tileViewportRect();
+    const viewportWidth = read(viewportRect.width);
+    const windowLeft = this.tileLeftForIndex(tileable, index, viewportRect);
+    const windowRight =
+      windowLeft + this.tileWidthForWindow(tileable[index], viewportRect);
+    const overflow =
+      direction < 0
+        ? this.scrollOffset - windowLeft - TILE_MARGIN
+        : windowRight - (this.scrollOffset + viewportWidth) - TILE_MARGIN;
+    if (overflow <= TILE_FOCUS_OVERFLOW_EPSILON) {
+      return false;
+    }
+    
+    this.stopKineticScroll();
+    this.scrollOffset =
+      direction < 0 ? windowLeft : windowRight - viewportWidth;
+    this.clampScrollOffset(tileable.length);
+    this.applyLayout();
+    this.focusActiveWindow();
+    return true;
   }
 
   public focusActiveWindow() {
@@ -4349,6 +4745,8 @@ export class Workspace {
   }
 
   private syncWindowVisibleOutputs(window: WaylandWindow) {
+    window.state[WINDOW_STATE_WORKSPACE_TILED].set(this.isTiled);
+    window.state[WINDOW_STATE_WORKSPACE_TILED].set(this.isTiled);
     window.state[WINDOW_STATE_TILED].set(
       this.isTiled && this.shouldTile(window),
     );
@@ -4362,10 +4760,84 @@ export class Workspace {
   }
 
   private tileableWindows(): WaylandWindow[] {
-    return this.windows.filter(
-      (window) =>
-        this.shouldTile(window) && !window.state[WINDOW_STATE_MINIMIZED](),
+    return this.windows.filter((window) => this.isTileable(window));
+  }
+
+  /**
+   * Whether `window` occupies a slot in the tile sequence right now.
+   * Minimized windows are excluded because they hold no slot.
+   */
+  private isTileable(window: WaylandWindow): boolean {
+    return this.shouldTile(window) && !window.state[WINDOW_STATE_MINIMIZED]();
+  }
+
+  /**
+   * Where `windowId` sits in the tile sequence: its index in
+   * `tileableWindows()`, or the index it would occupy if it were a tile. -1
+   * when the window is not in this workspace at all.
+   */
+  private tileIndexOf(windowId: string): number {
+    const position = this.windows.findIndex(
+      (current) => current.id === windowId,
     );
+    if (position < 0) {
+      return -1;
+    }
+    return this.windows
+      .slice(0, position)
+      .filter((current) => this.isTileable(current)).length;
+  }
+
+  /**
+   * The window that inherits focus when the active one is removed, or null to
+   * leave that to the compositor.
+   *
+   * "The tile that slid into its place" is only an answer for a tile in a
+   * tiled workspace. Anywhere else — a floating workspace, or a dialog that
+   * never held a slot — there is no next-one-along to name, and naming one
+   * anyway is what sent focus to the wrong window.
+   */
+  private successorForRemovedWindow(
+    wasTile: boolean,
+    tileIndex: number,
+  ): WaylandWindow | null {
+    if (!this.isTiled || !wasTile || tileIndex < 0) {
+      return null;
+    }
+    const tileable = this.tileableWindows();
+    return tileable[Math.min(tileIndex, tileable.length - 1)] ?? null;
+  }
+
+  public successorForMinimizedWindow(
+    window: WaylandWindow,
+    zIndexOf: (window: WaylandWindow) => number,
+  ): WaylandWindow | null {
+    if (this.isTiled && this.shouldTile(window)) {
+      const tile = this.successorForRemovedWindow(
+        true,
+        this.tileIndexOf(window.id),
+      );
+      if (tile) {
+        return tile;
+      }
+    }
+    const topmost = this.windows
+      .filter(
+        (current) =>
+          current.id !== window.id &&
+          !current.state[WINDOW_STATE_MINIMIZED]() &&
+          (!this.isTiled || !this.shouldTile(current)),
+      )
+      .reduce<WaylandWindow | null>(
+        (top, current) =>
+          top === null || zIndexOf(current) > zIndexOf(top) ? current : top,
+        null,
+      );
+    if (topmost || !this.isTiled) {
+      return topmost;
+    }
+    const tileable = this.tileableWindows();
+    return this.activeWindow(tileable) ?? tileable.at(-1) ?? null;
   }
 
   public focusedWindow(): WaylandWindow | undefined {
@@ -4412,6 +4884,27 @@ export class Workspace {
     }
 
     return tileable.length;
+  }
+
+  /**
+   * Where a newly opened tile goes: right after the focused tile (or the
+   * active tile, or the end), so it appears next to the window you are
+   * working with rather than at the far end of the row.
+   */
+  private tileInsertionIndexAfterFocusedWindow(): number {
+    const tileable = this.tileableWindows();
+    const focused = this.focusedWindow();
+    const anchor =
+      focused && this.shouldTile(focused)
+        ? focused
+        : this.activeWindow(tileable);
+    if (!anchor) {
+      return tileable.length;
+    }
+    const anchorIndex = tileable.findIndex(
+      (window) => window.id === anchor.id,
+    );
+    return anchorIndex >= 0 ? anchorIndex + 1 : tileable.length;
   }
 
   private moveTileWindowToIndex(window: WaylandWindow, tileIndex: number) {
@@ -4532,22 +5025,17 @@ export class Workspace {
     };
   }
 
-  private viewportRectToFloatingContentRect(
-    rect: ManagedWindowRect,
-  ): ManagedWindowRect {
+  private viewportRectToFloatingContentRect(rect: ManagedWindowRect): ManagedWindowRect {
     return {
-      x: read(rect.x) + this.scrollOffset,
+      x: read(rect.x) + this.physicalAlignedScrollOffset(),
       y: read(rect.y),
       width: read(rect.width),
       height: read(rect.height),
     };
   }
-
-  private floatingContentRectToViewportRect(
-    rect: ManagedWindowRect,
-  ): ManagedWindowRect {
+  private floatingContentRectToViewportRect(rect: ManagedWindowRect): ManagedWindowRect {
     return {
-      x: read(rect.x) - this.scrollOffset,
+      x: read(rect.x) - this.physicalAlignedScrollOffset(),
       y: read(rect.y),
       width: read(rect.width),
       height: read(rect.height),
@@ -4568,6 +5056,24 @@ export class Workspace {
       width,
       height,
     };
+  }
+
+  /**
+   * Scroll offset quantized to the monitor's physical pixel grid (multiples
+   * of 1/scale). Subtracting the same 1/scale-multiple from every window
+   * keeps each physical position at `round(x_i × scale) − k` with one shared
+   * integer k, so adjacent windows move pixel-rigidly while scrolling. A raw
+   * fractional offset rounds independently per window and makes the gaps
+   * between neighbours oscillate by ±1 physical px. The raw accumulator in
+   * `scrollOffset` stays untouched so slow gesture deltas below half a
+   * physical pixel still accumulate instead of stalling.
+   */
+  private physicalAlignedScrollOffset(): number {
+    const scale = COMPOSITOR.output.current[this.monitor]?.scale ?? 0;
+    if (!Number.isFinite(scale) || scale <= 0) {
+      return this.scrollOffset;
+    }
+    return Math.round(this.scrollOffset * scale) / scale;
   }
 
   private scrollToWindow(
@@ -4646,6 +5152,32 @@ export class Workspace {
     };
   }
 
+  // A tile spans the viewport height unless the client caps its height; such a
+  // window keeps its maximum and is centered vertically instead of stretched.
+  private tileRect(
+    window: WaylandWindow,
+    x: number,
+    width: number,
+    viewportRect: ManagedWindowRect,
+  ): ManagedWindowRect {
+    const viewportHeight = read(viewportRect.height);
+    const constraints = window.sizeConstraints();
+    const height = Math.min(
+      viewportHeight,
+      constrainedMax(constraints, "height", this.rootClientHeightExtra(window)),
+    );
+    return {
+      x,
+      y: read(viewportRect.y) + Math.round((viewportHeight - height) / 2),
+      width,
+      height,
+    };
+  }
+  
+  private rootClientHeightExtra(window: WaylandWindow): number {
+    const natural = this.naturalRootRect(window);
+    return Math.max(0, read(natural.height) - window.position.height);
+  }
   private setTileWidthFromRect(
     window: WaylandWindow,
     rect: ManagedWindowRect,
@@ -4681,10 +5213,14 @@ export class Workspace {
   ): number {
     const constraints = window.sizeConstraints();
     const extra = this.rootClientWidthExtra(window);
+    const clientMin = (constraints.min?.width ?? 1) + extra;
+    // The layout floor must not widen a window past the client's own maximum.
     return Math.max(
-      TILE_MIN_WIDTH,
-      (constraints.min?.width ?? 1) + extra,
-      read(viewportRect.width) * 0.2,
+      clientMin,
+      Math.min(
+        Math.max(TILE_MIN_WIDTH, read(viewportRect.width) * 0.2),
+        this.maxTileWidth(window),
+      ),
     );
   }
 
@@ -4766,6 +5302,10 @@ export class Workspace {
       };
     }
     return window.state[WINDOW_STATE_RECT]();
+  }
+
+  public setFocusPansIntoView(enabled: boolean): void {
+    this.focusPansIntoView = enabled;
   }
 }
 
@@ -4967,7 +5507,18 @@ function scheduleCloseAnimation(window: WaylandWindow): void {
 function scheduleMinimizeAnimation(
   window: WaylandWindow,
   minimized: boolean,
+  instant = false,
 ): void {
+  if (instant) {
+    const rest = minimized ? { x: 0, y: 120, width: 0, height: 0 } : { x: 0, y: 0, width: 0, height: 0 };
+    const opacity = minimized ? 0 : 1;
+    window.scheduleAnimation({
+      channel: MINIMIZE_ANIMATION_CHANNEL,
+      rect: { from: rest, to: rest, duration: 1, mode: "add" },
+      opacity: { from: opacity, to: opacity, duration: 1, mode: "override" },
+    });
+    return;
+  }
   window.scheduleAnimation({
     channel: MINIMIZE_ANIMATION_CHANNEL,
     rect: {

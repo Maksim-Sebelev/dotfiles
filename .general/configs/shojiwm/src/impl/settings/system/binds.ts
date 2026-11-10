@@ -1,7 +1,8 @@
 import { COMPOSITOR } from "shoji_wm";
 import type { HybridWindowManager } from "./window-manager";
+import type { WindowSwitcher } from "../visual-effects/window-switcher";
 
-export function initBinds(wm: HybridWindowManager, schedule: () => void) {
+export function initBinds(wm: HybridWindowManager, schedule: () => void, windowSwitcher: WindowSwitcher) {
 
   // COMPOSITOR.pointer.bindWindowMoveModifier("Super");
   // COMPOSITOR.pointer.bindWindowResizeModifier("Super");
@@ -93,6 +94,9 @@ export function initBinds(wm: HybridWindowManager, schedule: () => void) {
   });
   COMPOSITOR.key.bind("toggle-focused-window-maximize", "Super+M", () => {
     wm.toggleFocusedWindowMaximize();
+  });
+  COMPOSITOR.key.bind("toggle-focused-window-fullscreen", "Super+F", () => {
+    wm.toggleFocusedWindowFullscreen();
   });
   COMPOSITOR.key.bind("tile-focus-left", "Super+H", () => {
     wm.focusTile(-1);
@@ -187,5 +191,9 @@ export function initBinds(wm: HybridWindowManager, schedule: () => void) {
   COMPOSITOR.key.bind("profile", "Super+Shift+T", () => {
     profileEnabled = !profileEnabled;
     COMPOSITOR.debug.enableProfile(profileEnabled);
+  });
+
+  COMPOSITOR.key.bind("window-switcher", "Super+Tab", () => {
+    windowSwitcher.open(wm.getCurrentMonitorName());
   });
 }

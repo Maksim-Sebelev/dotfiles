@@ -6,7 +6,7 @@ import {
   shaderStage,
   type WaylandWindow,
 } from "shoji_wm";
-import type { LayerEffectHandle } from "shoji_wm/types";
+import type { CompiledEffectHandle } from "shoji_wm/types";
 import { acquireClock } from "./../system/animation-clock";
 
 export enum TerminalBackgroundAnimation {
@@ -17,7 +17,7 @@ export enum TerminalBackgroundAnimation {
 
 interface WindowInstance {
   animation: TerminalBackgroundAnimation;
-  effect: LayerEffectHandle;
+  effect: CompiledEffectHandle;
   clock: ReturnType<typeof acquireClock>;
 }
 
@@ -26,16 +26,14 @@ const windowInstances = new Map<string, WindowInstance>();
 export function terminalBackgroundAnimation(
   window: WaylandWindow,
   animation: TerminalBackgroundAnimation,
-): LayerEffectHandle {
+): CompiledEffectHandle {
   let instance = windowInstances.get(window.id);
   if (instance && instance.animation !== animation) {
-    instance.effect.dispose?.();
     instance.clock.release();
     windowInstances.delete(window.id);
     instance = undefined;
   }
   if (!instance) {
-    // Получаем имя монитора, на котором сейчас находится окно
     const outputName = window.output.peek() ?? "eDP-1";
     const clock = acquireClock(outputName);
     
@@ -52,7 +50,7 @@ export function terminalBackgroundAnimation(
 function createEffect(
   animation: TerminalBackgroundAnimation,
   clock: ReturnType<typeof acquireClock>
-): LayerEffectHandle {
+): CompiledEffectHandle {
   if (animation === TerminalBackgroundAnimation.Nothing) {
     return compileEffect({
       input: backdropSource(),
@@ -172,7 +170,6 @@ function getPipeline(
 
 export function disposeTerminalBackgroundAnimation() {
   for (const instance of windowInstances.values()) {
-    instance.effect.dispose?.();
     instance.clock.release();
   }
   windowInstances.clear();
@@ -181,7 +178,6 @@ export function disposeTerminalBackgroundAnimation() {
 export function disposeWindowAnimation(windowId: string) {
   const instance = windowInstances.get(windowId);
   if (instance) {
-    instance.effect.dispose?.();
     instance.clock.release();
     windowInstances.delete(windowId);
   }

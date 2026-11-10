@@ -11,6 +11,9 @@ import {
 import {
   Bar,
 } from "./visual-effects/bar";
+import {
+  WindowSwitcherStyle  
+} from "./system/wm-config"
 
 // please add _n at the end of every enum,
 // because of ability to add other versions
@@ -117,6 +120,18 @@ export function getConfig(preset: Preset): OutlookConfig {
         background: BackgroundAnimation.Nothing,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
+        windowManager: {
+          focusPansIntoView: false,
+          gestureSpeed: {
+            workspaceScrollFactor: 1,
+            workspaceScrollKineticFactor: 1,
+            workspaceSwitchFactor: 1,
+            workspaceSwitchVelocityFactor: 1,
+            workspaceScrollSnapMaxVelocity: 300,
+            workspaceScrollSnapBreakoutPx: 48,
+          },
+          windowSwitcher: WindowSwitcherStyle.Grid,
+        },
       }
 
     default:
