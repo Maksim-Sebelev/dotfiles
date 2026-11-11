@@ -23,7 +23,7 @@ export function initBinds(
   COMPOSITOR.key.bind("discord", "Super+D", () => {
     COMPOSITOR.process.spawn({
       command:
-        "discord --enable-features=UseOzonePlatform --ozone-platform=wayland --enable-wayland-ime --disable-gpu",
+        "discordptb",
     });
   });
   
@@ -182,7 +182,7 @@ export function initBinds(
   COMPOSITOR.key.bind("brightness-down", "XF86MonBrightnessDown", () => {
     COMPOSITOR.process.spawn({ command: "brightnessctl -q -n2 set 5%-" });
   });
-  COMPOSITOR.key.bind("brightness-off", "Super+semicolon", () => {
+  COMPOSITOR.key.bind("brightness-off", "Super+grave", () => {
     COMPOSITOR.process.spawn({ command: "brightnessctl -q set 0%" });
   });
 
@@ -198,7 +198,7 @@ export function initBinds(
     COMPOSITOR.debug.enableProfile(profileEnabled);
   });
 
-  COMPOSITOR.key.bind("window-switcher", "Super+grave", () => {
+  COMPOSITOR.key.bind("window-switcher", "Super+semicolon", () => {
     windowSwitcher.open(wm.getCurrentMonitorName());
   });
   COMPOSITOR.key.bind("window-grid", "Super+Tab", () => {
