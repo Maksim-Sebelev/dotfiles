@@ -1,8 +1,40 @@
 import { COMPOSITOR, type WaylandWindow } from "shoji_wm";
-import type { HybridWindowManager } from "./window-manager";
-
+import { type HybridWindowManager } from "./window-manager";
+import {
+  type GlobalConfig,
+} from "../global-config"
 const STARTUP_WORKSPACE_TARGETS = new Map<string, number>();
 const MULTI_INSTANCE_QUEUES = new Map<string, number[]>();
+
+export
+enum ScreenLocker {
+  gtklock,
+  swaylock,
+  Nothing,
+};
+
+function initScreenLockerAtStartup(config: GlobalConfig) {
+  if (config.screenLocker === ScreenLocker.Nothing) {
+    return;
+  }
+
+  COMPOSITOR.session.startLocked = true;
+
+  switch (config.screenLocker)  {
+  case ScreenLocker.gtklock:
+    COMPOSITOR.process.once('locker', { 
+      command: ['gtklock', '--daemonize']
+    });
+    break;
+  case ScreenLocker.swaylock:
+    console.error(`[screenlocker]: swaylock not imlemented now`)
+    break;
+  default:
+    console.error(`[screenlocker]: undefined screenlocker requested`)
+  }
+
+}
+
 
 function enqueueMultiInstance(matcher: string, workspaceIndex: number) {
   const queue = MULTI_INSTANCE_QUEUES.get(matcher) ?? [];
@@ -31,7 +63,8 @@ function launchOnWorkspace(
   });
 }
 
-export function initPrimaryState() {
+export function initStartup(config: GlobalConfig) {
+  initScreenLockerAtStartup(config);
   COMPOSITOR.process.once("fcitx5", {
     command: "fcitx5 -d",
     runPolicy: "once-per-session",

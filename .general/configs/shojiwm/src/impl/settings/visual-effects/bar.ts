@@ -1,13 +1,13 @@
 import { COMPOSITOR } from "shoji_wm";
-import { type OutlookConfig } from "../visual-effects-config";
+import { type GlobalConfig } from "../global-config";
 
 export enum Bar {
   Nothing,
-  ShojiBar2, ShojiBar3,
+  ShojiBar2, ShojiBar3, ShojiBar4,
   Waybar,
 }
 
-export function initBar(config: OutlookConfig) {
+export function initBar(config: GlobalConfig) {
   switch (config.bar) {
   case Bar.ShojiBar2:
     COMPOSITOR.process.once("shell", {
@@ -30,7 +30,7 @@ export function initBar(config: OutlookConfig) {
   case Bar.Nothing:
     break;
   default:
-    console.error(`Unknown bar type.`)
+    console.error(`Not implemented now`)
     break;
   }
 }

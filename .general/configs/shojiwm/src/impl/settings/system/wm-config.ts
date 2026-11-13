@@ -13,7 +13,7 @@ export enum WindowSwitcherStyle {
 /**
  * Behaviour knobs for `HybridWindowManager` that are not part of the
  * visual preset (they change how the WM reacts to input, not how it
- * looks). Read once in `init.ts` via `OutlookConfig.windowManager`.
+ * looks). Read once in `init.ts` via `GlobalConfig.windowManager`.
  */
 export interface WindowManagerConfig {
   gestureSpeed?: WorkspaceGestureSpeedConfig;

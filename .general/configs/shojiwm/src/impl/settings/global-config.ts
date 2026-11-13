@@ -10,13 +10,19 @@ import {
 import {
   Bar,
 } from "./visual-effects/bar";
-import type { WindowManagerConfig } from "./system/wm-config";
+import {
+  ScreenLocker
+} from "./system/startup";
+import type {
+  WindowManagerConfig
+} from "./system/wm-config";
 
-export interface OutlookConfig {
+export interface GlobalConfig {
   bar: Bar;
   background: BackgroundAnimation;
   terminalBackground: TerminalBackgroundAnimation;
   popup: PopupAnimation;
+  screenLocker: ScreenLocker;
   /**
    * Optional WM behaviour overrides (gesture speed, focus-pan behaviour).
    * Omitted fields fall back to `DEFAULT_WM_CONFIG` in `init.ts`.

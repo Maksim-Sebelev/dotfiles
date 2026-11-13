@@ -6,9 +6,9 @@ import {
 import {
   popupAnimation,
 } from "./popup-animation";
-import { type OutlookConfig } from "../visual-effects-config";
+import { type GlobalConfig } from "../global-config";
 
-export function initEffectRouter(config: OutlookConfig): void {
+export function initEffectRouter(config: GlobalConfig): void {
   COMPOSITOR.effect.layer = (layer) => {
     const isBackground =
       layer.namespace()?.includes("background") ||

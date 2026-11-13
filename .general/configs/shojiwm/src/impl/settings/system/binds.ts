@@ -1,8 +1,28 @@
 import { COMPOSITOR } from "shoji_wm";
 import type { HybridWindowManager } from "./window-manager";
 import type { WindowSwitcher } from "../visual-effects/window-switcher";
+import type { GlobalConfig } from "../global-config"
+import { ScreenLocker } from "./startup";
+
+function bindScreenLocker(config: GlobalConfig) {
+  switch (config.screenLocker) {
+  case ScreenLocker.gtklock:
+    COMPOSITOR.key.bind("screenlocker", "Super+grave", () => {
+      COMPOSITOR.process.spawn({
+        command: ['gtklock', '--daemonize']
+      });
+    });
+    break;
+  case ScreenLocker.swaylock:
+    console.error(`[screenlocker-binding]: swaylock not implemented now`)
+    break;
+  case ScreenLocker.Nothing:
+    break;
+  }
+}
 
 export function initBinds(
+  config: GlobalConfig,
   wm: HybridWindowManager,
   schedule: () => void,
   windowSwitcher: WindowSwitcher,
@@ -12,69 +32,71 @@ export function initBinds(
   // COMPOSITOR.pointer.bindWindowMoveModifier("Super");
   // COMPOSITOR.pointer.bindWindowResizeModifier("Super");
 
+  bindScreenLocker(config);
+
   COMPOSITOR.key.bind("terminal", "Super+Q", () => {
     COMPOSITOR.process.spawn({ command: ["kitty"] });
   });
-  
+
   COMPOSITOR.key.bind("browser", "Super+B", () => {
     COMPOSITOR.process.spawn({ command: ["firefox"] });
   });
-  
+
   COMPOSITOR.key.bind("discord", "Super+D", () => {
     COMPOSITOR.process.spawn({
       command:
         "discordptb",
     });
   });
-  
+
   COMPOSITOR.key.bind("dolphin", "Super+E", () => {
     COMPOSITOR.process.spawn({ command: "kitty yazi" });
   });
-  
+
   COMPOSITOR.key.bind("mpc-toggle", "Alt+O", () => {
-    COMPOSITOR.process.spawn({ 
-      command: "mpc toggle" 
+    COMPOSITOR.process.spawn({
+      command: "mpc toggle"
     });
   });
-  
+
   COMPOSITOR.key.bind("mpc-prev", "Alt+U", () => {
-    COMPOSITOR.process.spawn({ 
-      command: "mpc prev" 
+    COMPOSITOR.process.spawn({
+      command: "mpc prev"
     });
   });
-  
+
   COMPOSITOR.key.bind("mpc-next", "Alt+I", () => {
-    COMPOSITOR.process.spawn({ 
-      command: "mpc next" 
+    COMPOSITOR.process.spawn({
+      command: "mpc next"
     });
   });
-  
+
   COMPOSITOR.key.bind("screenshot-clipboard", "Print", () => {
     COMPOSITOR.process.spawn({
       command: "hyprshot -s -z -m region -m active --clipboard-only",
     });
   });
-  
+
   COMPOSITOR.key.bind("screenshot-save", "Alt+Print", () => {
     COMPOSITOR.process.spawn({
       command: "hyprshot -s -z -m region -m active",
     });
   });
-  
+
   COMPOSITOR.key.bind("record-screen", "Shift+Print", () => {
     // toggleRecording();
     COMPOSITOR.process.spawn({
       command: "record-screen",
     });
   });
-  
+
   COMPOSITOR.key.bind("stop-record-screen", "Alt+S", () => {
     COMPOSITOR.process.spawn({
       command: "stop-screen-recording",
     });
     // toggleRecording();
   });
-  
+
   function toggleStartMenu() {
     const monitor = wm.getCurrentMonitorName();
     COMPOSITOR.process.spawn({
@@ -82,14 +104,14 @@ export function initBinds(
     });
   }
   COMPOSITOR.key.bind("start-menu", "Super+P", toggleStartMenu);
-  
+
   COMPOSITOR.key.bind("clipboard", "Super+V", () => {
     const monitor = wm.getCurrentMonitorName();
     COMPOSITOR.process.spawn({
       command: ["ags", "request", "-i", "ags", "clipboard", "toggle", monitor],
     });
   });
-  
+
   COMPOSITOR.key.bind("toggle-tiling-mode", "Super+S", () => {
     wm.toggleCurrentWorkspaceTiling();
     schedule();
@@ -106,10 +128,10 @@ export function initBinds(
   COMPOSITOR.key.bind("tile-focus-left", "Super+H", () => {
     wm.focusTile(-1);
   });
-    COMPOSITOR.key.bind("tile-focus-right", "Super+L", () => {
+  COMPOSITOR.key.bind("tile-focus-right", "Super+L", () => {
     wm.focusTile(1);
   });
-  
+
   COMPOSITOR.key.bind("tile-move-left", "Super+Shift+H", () => {
     wm.moveFocusedTile(-1);
     schedule();
@@ -134,7 +156,7 @@ export function initBinds(
     wm.switchWorkspace(1);
     schedule();
   });
-  
+
   for (let i = 1; i <= 9; i++) {
     COMPOSITOR.key.bind(`workspace-switch-${i}`, `Super+${i}`, () => {
       const monitor = wm.getCurrentMonitorName();
@@ -162,7 +184,7 @@ export function initBinds(
     schedule();
     wm.moveFocusedWindowToWorkspace(10);
   });
-  
+
   COMPOSITOR.key.bind("volume-up", "XF86AudioRaiseVolume", () => {
     COMPOSITOR.process.spawn({ command: "volume-up 5" });
   });
@@ -175,14 +197,14 @@ export function initBinds(
   COMPOSITOR.key.bind("microphone-mute", "XF86AudioMicMute", () => {
     COMPOSITOR.process.spawn({ command: "microphone-toggle" });
   });
-  
+
   COMPOSITOR.key.bind("brightness-up", "XF86MonBrightnessUp", () => {
     COMPOSITOR.process.spawn({ command: "brightnessctl -q -n2 set 5%+" });
   });
   COMPOSITOR.key.bind("brightness-down", "XF86MonBrightnessDown", () => {
     COMPOSITOR.process.spawn({ command: "brightnessctl -q -n2 set 5%-" });
   });
-  COMPOSITOR.key.bind("brightness-off", "Super+grave", () => {
+  COMPOSITOR.key.bind("brightness-off", "Super+O", () => {
     COMPOSITOR.process.spawn({ command: "brightnessctl -q set 0%" });
   });
 
@@ -191,7 +213,7 @@ export function initBinds(
     fpsCounter = !fpsCounter;
     COMPOSITOR.debug.fpsCounter = fpsCounter;
   });
-  
+
   let profileEnabled = false;
   COMPOSITOR.key.bind("profile", "Super+Shift+T", () => {
     profileEnabled = !profileEnabled;

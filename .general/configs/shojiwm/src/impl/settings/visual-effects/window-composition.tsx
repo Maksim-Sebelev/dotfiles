@@ -49,7 +49,7 @@ import {
   MaximizeButton,
   MinimizeButton,
 } from "./window-buttons";
-import { type OutlookConfig } from "../visual-effects-config";
+import { type GlobalConfig } from "../global-config";
 import {
   type WindowSwitcher,
   type TitlebarButton,
@@ -136,13 +136,13 @@ function usesClientDecoration(decoration: WindowDecorationState): boolean {
 
 export interface WindowCompositionContext {
   wm: HybridWindowManager;
-  config: OutlookConfig;
+  config: GlobalConfig;
   windowSwitcher: WindowSwitcher;
 }
 
 export function initWindowComposition(
   wm: HybridWindowManager,
-  config: OutlookConfig,
+  config: GlobalConfig,
   windowSwitcher: WindowSwitcher,
   secondaryWindowSwitcher: WindowSwitcher,
 ): void {

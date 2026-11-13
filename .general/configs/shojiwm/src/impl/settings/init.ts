@@ -1,5 +1,5 @@
 import { initHybridWindowManager } from "./system/window-manager-runtime";
-import { initPrimaryState } from "./system/startup";
+import { initStartup } from "./system/startup";
 import { initBar } from "./visual-effects/bar";
 import { initEnvironment } from "./system/environment";
 import { initOutputs } from "./system/outputs";
@@ -28,10 +28,10 @@ import {
   broadcastDockProximity,
   broadcastSnapPreview,
 } from "./system/ipc";
-import { type OutlookConfig } from "./visual-effects-config";
+import { type GlobalConfig } from "./global-config";
 import { DEFAULT_WM_CONFIG } from "./system/wm-config";
 
-export function initAll(config: OutlookConfig): void {
+export function initAll(config: GlobalConfig): void {
   initLifecycle();
 
   initEnvironment();
@@ -41,7 +41,7 @@ export function initAll(config: OutlookConfig): void {
   const wm = initHybridWindowManager();
 
   // WM behaviour: gesture speed (three-finger scroll/switch tuning) and
-  // focus-pan behaviour. Per-preset via `OutlookConfig.windowManager`,
+  // focus-pan behaviour. Per-preset via `GlobalConfig.windowManager`,
   // falling back to `DEFAULT_WM_CONFIG`.
   const wmConfig = { ...DEFAULT_WM_CONFIG, ...config.windowManager };
   if (wmConfig.gestureSpeed) {
@@ -75,10 +75,10 @@ export function initAll(config: OutlookConfig): void {
   initWindowRequests(wm, scheduleBroadcast);
   initCompositorEvents(wm, scheduleBroadcast);
 
-  initPrimaryState();
+  initStartup(config);
   initBar(config);
   initCliphist();
-  initBinds(wm, scheduleBroadcast, windowSwitcher, secondaryWindowSwitcher);
+  initBinds(config, wm, scheduleBroadcast, windowSwitcher, secondaryWindowSwitcher);
 
   initInput(wm);
   initDecoration();

@@ -1,4 +1,3 @@
-import { type OutlookConfig } from "./visual-effects-config";
 import {
   BackgroundAnimation,
 } from "./visual-effects/background-animation";
@@ -14,6 +13,12 @@ import {
 import {
   WindowSwitcherStyle  
 } from "./system/wm-config"
+import {
+  ScreenLocker
+} from "./system/startup"
+import {
+  type GlobalConfig
+} from "./global-config"
 
 // please add _n at the end of every enum,
 // because of ability to add other versions
@@ -40,7 +45,9 @@ export enum Preset {
   PowerSaver, // no effects
 };
 
-export function getConfig(preset: Preset): OutlookConfig {
+const screenLocker = ScreenLocker.gtklock;
+
+export function getConfig(preset: Preset): GlobalConfig {
   switch (preset) {
     case Preset.Slavya_lake_rain_1:
       return {
@@ -48,6 +55,7 @@ export function getConfig(preset: Preset): OutlookConfig {
         background: BackgroundAnimation.Rain_2,
         terminalBackground: TerminalBackgroundAnimation.Rain_3,
         popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
       }
 
     case Preset.Slavya_winter_1:
@@ -56,6 +64,7 @@ export function getConfig(preset: Preset): OutlookConfig {
         background: BackgroundAnimation.Snow_with_blur_1,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
       }
 
     case Preset.Slavya_winter_2:
@@ -64,6 +73,7 @@ export function getConfig(preset: Preset): OutlookConfig {
         background: BackgroundAnimation.Snow_without_blur_1,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
       }
 
     case Preset.Ulya_winter_1:
@@ -72,6 +82,7 @@ export function getConfig(preset: Preset): OutlookConfig {
         background: BackgroundAnimation.Snow_with_blur_3,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
       }
 
     case Preset.Ulya_winter_2:
@@ -80,6 +91,7 @@ export function getConfig(preset: Preset): OutlookConfig {
         background: BackgroundAnimation.Snow_without_blur_3,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
       }
 
     case Preset.Ulya_summer_1:
@@ -88,6 +100,7 @@ export function getConfig(preset: Preset): OutlookConfig {
         background: BackgroundAnimation.Sunshine_2,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
       }
 
     case Preset.Miku_from_bus_1:
@@ -96,6 +109,7 @@ export function getConfig(preset: Preset): OutlookConfig {
         background: BackgroundAnimation.Sunshine_1,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
       }
 
     case Preset.Alisa_winter_1:
@@ -104,6 +118,7 @@ export function getConfig(preset: Preset): OutlookConfig {
         background: BackgroundAnimation.Snow_without_blur_2,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
       }
 
     case Preset.RainyBubbles_1:
@@ -112,6 +127,7 @@ export function getConfig(preset: Preset): OutlookConfig {
         background: BackgroundAnimation.Bubbles,
         terminalBackground: TerminalBackgroundAnimation.Rain_1,
         popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
       }
 
     case Preset.PowerSaver:
@@ -120,6 +136,7 @@ export function getConfig(preset: Preset): OutlookConfig {
         background: BackgroundAnimation.Nothing,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
         windowManager: {
           focusPansIntoView: false,
           gestureSpeed: {
