@@ -73,18 +73,25 @@ function launchOnWorkspace(
 }
 
 export function initStartup(config: GlobalConfig) {
+
   initScreenLockerAtStartup(config);
+
+  COMPOSITOR.process.once("microphone-startup-off", {
+    command: "microphone-off",
+    runPolicy: "once-per-session",
+  });
+
 
   COMPOSITOR.process.once("fcitx5", {
     command: "fcitx5 -d",
     runPolicy: "once-per-session",
   });
-  
+
   COMPOSITOR.process.once("mpdris2-rs.service", {
     command: "systemctl --user enable --now mpdris2-rs.service",
     runPolicy: "once-per-session",
   });
-  
+
   launchOnWorkspace("firefox-at-start", "firefox", 3, "firefox");
   launchOnWorkspace("Telegram-at-start", "Telegram", 4, "telegram");
 
