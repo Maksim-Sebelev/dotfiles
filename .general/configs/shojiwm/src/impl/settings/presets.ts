@@ -17,6 +17,9 @@ import {
   type GlobalConfig
 } from "./global-config"
 
+// const AllowHardEffects = true;
+const AllowHardEffects = false;
+
 // please add _n at the end of every enum,
 // because of ability to add other versions
 // of required preset
@@ -61,7 +64,7 @@ export function getConfig(preset: Preset): GlobalConfig {
     case Preset.Slavya_winter_1:
       return {
         bar: Bar.ShojiBar2,
-        background: BackgroundAnimation.Snow_with_blur_1,
+        background: AllowHardEffects ? BackgroundAnimation.Snow_with_blur_1 : BackgroundAnimation.Snow_with_blur_4,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
         screenLocker: screenLocker,
@@ -70,7 +73,7 @@ export function getConfig(preset: Preset): GlobalConfig {
     case Preset.Slavya_winter_2:
       return {
         bar: Bar.ShojiBar2,
-        background: BackgroundAnimation.Snow_without_blur_1,
+        background: AllowHardEffects ? BackgroundAnimation.Snow_without_blur_1 : BackgroundAnimation.Snow_without_blur_4,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
         screenLocker: screenLocker,
@@ -85,7 +88,7 @@ export function getConfig(preset: Preset): GlobalConfig {
     case Preset.Ulya_winter_1:
       return {
         bar: Bar.ShojiBar2,
-        background: BackgroundAnimation.Snow_with_blur_3,
+        background: AllowHardEffects ? BackgroundAnimation.Snow_with_blur_4 : BackgroundAnimation.Snow_with_blur_4,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
         screenLocker: screenLocker,
@@ -94,7 +97,7 @@ export function getConfig(preset: Preset): GlobalConfig {
     case Preset.Ulya_winter_2:
       return {
         bar: Bar.ShojiBar2,
-        background: BackgroundAnimation.Snow_without_blur_3,
+        background: AllowHardEffects ? BackgroundAnimation.Snow_without_blur_4 : BackgroundAnimation.Snow_without_blur_4,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
         screenLocker: screenLocker,
@@ -121,7 +124,7 @@ export function getConfig(preset: Preset): GlobalConfig {
     case Preset.Alisa_winter_1:
       return {
         bar: Bar.ShojiBar2,
-        background: BackgroundAnimation.Snow_without_blur_2,
+        background: AllowHardEffects ? BackgroundAnimation.Snow_without_blur_2 : BackgroundAnimation.Snow_without_blur_4,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
         screenLocker: screenLocker,

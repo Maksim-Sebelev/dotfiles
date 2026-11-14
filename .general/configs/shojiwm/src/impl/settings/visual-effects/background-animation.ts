@@ -12,8 +12,8 @@ export enum BackgroundAnimation {
   Nothing,
   LightBlur, MiddleBlur, HardBlur,
   Rain_1, Rain_2, Rain_3,
-  Snow_with_blur_1, Snow_with_blur_2, Snow_with_blur_3,
-  Snow_without_blur_1, Snow_without_blur_2, Snow_without_blur_3,
+  Snow_with_blur_1, Snow_with_blur_2, Snow_with_blur_3, Snow_with_blur_4,
+  Snow_without_blur_1, Snow_without_blur_2, Snow_without_blur_3, Snow_without_blur_4,
   Sunshine_1, Sunshine_2,
   Synthway_day, Synthway_night,
   Plasma,
@@ -40,10 +40,10 @@ export function backgroundAnimation(
   }
   if (!instance) {
     const clock = acquireClock(outputName);
-    instance = { 
-      animation, 
-      effect: createInstance(outputName, animation, clock), 
-      clock 
+    instance = {
+      animation,
+      effect: createInstance(outputName, animation, clock),
+      clock
     };
     instances.set(outputName, instance);
   }
@@ -121,23 +121,23 @@ function getPipeline(
         }),
       ];
 
-      case BackgroundAnimation.Rain_3:
-        return [
-          dualKawaseBlur({ radius: 1, passes: 2 }),
-          shaderStage(loadShader("./src/impl/shaders/window/rain/3.frag"), {
-            uniforms: {
-              time: clock.time,
-              aspect: clock.aspect,
-              speed:  RAIN_BACKGROUND_SPEED,
-              angle_deg: RAIN_BACKGROUND_ANGLE_DEG,
-              rain_amount: 0.4,
-              streak_length: 1.0,
-              splashes: 1.0,
-              rain_opacity: 0.55,
-              splash_opacity: 0.7,
-            },
-          }),
-        ];
+    case BackgroundAnimation.Rain_3:
+      return [
+        dualKawaseBlur({ radius: 1, passes: 2 }),
+        shaderStage(loadShader("./src/impl/shaders/window/rain/3.frag"), {
+          uniforms: {
+            time: clock.time,
+            aspect: clock.aspect,
+            speed: RAIN_BACKGROUND_SPEED,
+            angle_deg: RAIN_BACKGROUND_ANGLE_DEG,
+            rain_amount: 0.4,
+            streak_length: 1.0,
+            splashes: 1.0,
+            rain_opacity: 0.55,
+            splash_opacity: 0.7,
+          },
+        }),
+      ];
     case BackgroundAnimation.Synthway_day:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/synthway/1.frag"), {
@@ -167,7 +167,7 @@ function getPipeline(
           },
         }),
       ];
-      
+
     case BackgroundAnimation.Snow_without_blur_1:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/snow/1.frag"), {
@@ -180,7 +180,7 @@ function getPipeline(
           },
         }),
       ];
-      
+
     case BackgroundAnimation.Snow_without_blur_2:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/snow/2.frag"), {
@@ -194,7 +194,7 @@ function getPipeline(
           },
         }),
       ];
-      
+
     case BackgroundAnimation.Snow_without_blur_3:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/snow/3.frag"), {
@@ -208,7 +208,20 @@ function getPipeline(
           },
         }),
       ];
-      
+
+      case BackgroundAnimation.Snow_without_blur_4:
+      return [
+        shaderStage(loadShader("./src/impl/shaders/background/snow/4.frag"), {
+          uniforms: {
+            time: clock.time,
+            aspect: clock.aspect,
+            speed: 1.0,
+            snow_amount: 0.8,
+            angle_deg: -15.0,
+          },
+        }),
+      ];
+
     case BackgroundAnimation.Snow_with_blur_1:
       return [
         dualKawaseBlur({ radius: 1, passes: 2 }),
@@ -222,7 +235,7 @@ function getPipeline(
           },
         }),
       ];
-      
+
     case BackgroundAnimation.Snow_with_blur_2:
       return [
         dualKawaseBlur({ radius: 1, passes: 2 }),
@@ -237,7 +250,7 @@ function getPipeline(
           },
         }),
       ];
-      
+
     case BackgroundAnimation.Snow_with_blur_3:
       return [
         dualKawaseBlur({ radius: 1, passes: 2 }),
@@ -252,7 +265,20 @@ function getPipeline(
           },
         }),
       ];
-      
+
+    case BackgroundAnimation.Snow_with_blur_4:
+      return [
+        dualKawaseBlur({ radius: 1, passes: 2 }),
+        shaderStage(loadShader("./src/impl/shaders/background/snow/4.frag"), {
+          uniforms: {
+            time: clock.time,
+            aspect: clock.aspect,
+            speed: 1.0,
+            snow_amount: 0.6,
+            angle_deg: -15.0,
+          },
+        }),
+      ];
     case BackgroundAnimation.Sunshine_1:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/sunshine/1.frag"), {
@@ -266,7 +292,7 @@ function getPipeline(
           },
         }),
       ];
-      
+
     case BackgroundAnimation.Sunshine_2:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/sunshine/1.frag"), {
@@ -280,7 +306,7 @@ function getPipeline(
           },
         }),
       ];
-      
+
     case BackgroundAnimation.Plasma:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/plasma/1.frag"), {
@@ -294,7 +320,7 @@ function getPipeline(
           },
         }),
       ];
-      
+
     case BackgroundAnimation.Bubbles:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/bubbles/1.frag"), {
@@ -309,7 +335,7 @@ function getPipeline(
           },
         }),
       ];
-      
+
     default:
       console.warn(`No shader for animation ${animation}`);
       return [];
