@@ -13,7 +13,7 @@ import { acquireClock } from "./../system/animation-clock";
 export enum TerminalBackgroundAnimation {
   Nothing,
   LightBlur, MiddleBlur, HardBlur,
-  Rain_1, Rain_2, Rain_3, Rain_4, Rain_5,
+  Rain_1, Rain_2, Rain_3, Rain_4,
 }
 
 interface WindowInstance {
@@ -165,20 +165,6 @@ function getPipeline(
             aspect: clock.aspect,
             speed: RAIN_WINDOW_SPEED,
             angle_deg: 15,
-            rain_amount: 0.4,
-          },
-        }),
-      ];
-
-    case TerminalBackgroundAnimation.Rain_5:
-      return [
-        dualKawaseBlur({ radius: 1, passes: 2 }),
-        shaderStage(loadShader("./src/impl/shaders/window/rain/5.frag"), {
-          uniforms: {
-            time: clock.time,
-            aspect: clock.aspect,
-            speed: RAIN_WINDOW_SPEED,
-            angle_deg: RAIN_WINDOW_ANGLE_DEG,
             rain_amount: 0.4,
           },
         }),

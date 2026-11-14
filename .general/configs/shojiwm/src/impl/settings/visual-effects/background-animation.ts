@@ -11,7 +11,7 @@ import { acquireClock } from "./../system/animation-clock";
 export enum BackgroundAnimation {
   Nothing,
   LightBlur, MiddleBlur, HardBlur,
-  Rain_1, Rain_2, Rain_3, Rain_4,
+  Rain_1, Rain_2, Rain_3,
   Snow_with_blur_1, Snow_with_blur_2, Snow_with_blur_3,
   Snow_without_blur_1, Snow_without_blur_2, Snow_without_blur_3,
   Sunshine_1, Sunshine_2,
@@ -34,7 +34,6 @@ export function backgroundAnimation(
 ): LayerEffectHandle {
   let instance = instances.get(outputName);
   if (instance && instance.animation !== animation) {
-    instance.effect.dispose?.();
     instance.clock.release();
     instances.delete(outputName);
     instance = undefined;
@@ -97,10 +96,10 @@ function getPipeline(
           uniforms: {
             time: clock.time,
             aspect: clock.aspect,
-            speed: RAIN_BACKGROUND_SPEED,
+            speed: 1,
             angle_deg: RAIN_BACKGROUND_ANGLE_DEG * 2,
-            rain_amount: 0.8,
-            streak_length: 10,
+            rain_amount: 0.3,
+            streak_length: 5,
             splashes: 0,
           },
         }),
@@ -122,36 +121,23 @@ function getPipeline(
         }),
       ];
 
-    case BackgroundAnimation.Rain_3:
-      return [
-        shaderStage(loadShader("./src/impl/shaders/background/rain/3.frag"), {
-          uniforms: {
-            time: clock.time,
-            aspect: clock.aspect,
-            speed: RAIN_BACKGROUND_SPEED,
-            angle_deg: RAIN_BACKGROUND_SPEED,
-            rain_amount: 10,
-            streak_length: 5,
-            splashes: 0.0,
-          },
-        }),
-      ];
-
-    case BackgroundAnimation.Rain_4:
-      return [
-        shaderStage(loadShader("./src/impl/shaders/background/rain/4.frag"), {
-          uniforms: {
-            time: clock.time,
-            aspect: clock.aspect,
-            speed: RAIN_BACKGROUND_SPEED,
-            angle_deg: RAIN_BACKGROUND_ANGLE_DEG,
-            rain_amount: 10,
-            streak_length: 5,
-            splashes: 0.0,
-          },
-        }),
-      ];
-
+      case BackgroundAnimation.Rain_3:
+        return [
+          dualKawaseBlur({ radius: 1, passes: 2 }),
+          shaderStage(loadShader("./src/impl/shaders/window/rain/3.frag"), {
+            uniforms: {
+              time: clock.time,
+              aspect: clock.aspect,
+              speed:  RAIN_BACKGROUND_SPEED,
+              angle_deg: RAIN_BACKGROUND_ANGLE_DEG,
+              rain_amount: 0.4,
+              streak_length: 1.0,
+              splashes: 1.0,
+              rain_opacity: 0.55,
+              splash_opacity: 0.7,
+            },
+          }),
+        ];
     case BackgroundAnimation.Synthway_day:
       return [
         shaderStage(loadShader("./src/impl/shaders/background/synthway/1.frag"), {
@@ -332,7 +318,6 @@ function getPipeline(
 
 export function disposeBackgroundAnimation() {
   for (const instance of instances.values()) {
-    instance.effect.dispose?.();
     instance.clock.release();
   }
   instances.clear();
