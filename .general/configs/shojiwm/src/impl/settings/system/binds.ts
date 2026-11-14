@@ -6,18 +6,18 @@ import { ScreenLocker } from "./startup";
 
 function bindScreenLocker(config: GlobalConfig) {
   switch (config.screenLocker) {
-  case ScreenLocker.gtklock:
-    COMPOSITOR.key.bind("screenlocker", "Super+grave", () => {
-      COMPOSITOR.process.spawn({
-        command: ['gtklock', '--daemonize']
+    case ScreenLocker.gtklock:
+      COMPOSITOR.key.bind("screenlocker", "Super+grave", () => {
+        COMPOSITOR.process.spawn({
+          command: ['gtklock', '--daemonize']
+        });
       });
-    });
-    break;
-  case ScreenLocker.swaylock:
-    console.error(`[screenlocker-binding]: swaylock not implemented now`)
-    break;
-  case ScreenLocker.Nothing:
-    break;
+      break;
+    case ScreenLocker.swaylock:
+      console.error(`[screenlocker-binding]: swaylock not implemented now`)
+      break;
+    case ScreenLocker.Nothing:
+      break;
   }
 }
 
@@ -51,24 +51,6 @@ export function initBinds(
 
   COMPOSITOR.key.bind("dolphin", "Super+E", () => {
     COMPOSITOR.process.spawn({ command: "kitty yazi" });
-  });
-
-  COMPOSITOR.key.bind("mpc-toggle", "Alt+O", () => {
-    COMPOSITOR.process.spawn({
-      command: "mpc toggle"
-    });
-  });
-
-  COMPOSITOR.key.bind("mpc-prev", "Alt+U", () => {
-    COMPOSITOR.process.spawn({
-      command: "mpc prev"
-    });
-  });
-
-  COMPOSITOR.key.bind("mpc-next", "Alt+I", () => {
-    COMPOSITOR.process.spawn({
-      command: "mpc next"
-    });
   });
 
   COMPOSITOR.key.bind("screenshot-clipboard", "Print", () => {
@@ -206,6 +188,31 @@ export function initBinds(
   });
   COMPOSITOR.key.bind("brightness-off", "Super+O", () => {
     COMPOSITOR.process.spawn({ command: "brightnessctl -q set 0%" });
+  });
+
+  COMPOSITOR.key.bind("music-toggle", "Alt+O", () => {
+    COMPOSITOR.process.spawn({ command: "mpc toggle" });
+  });
+  COMPOSITOR.key.bind("music-prev", "Alt+U", () => {
+    COMPOSITOR.process.spawn({ command: "mpc prev" });
+  });
+  COMPOSITOR.key.bind("music-next", "Alt+I", () => {
+    COMPOSITOR.process.spawn({ command: "mpc next" });
+  });
+  COMPOSITOR.key.bind("music-begin", "Alt+B", () => {
+    COMPOSITOR.process.spawn({ command: "mpc seek 0" });
+  });
+  COMPOSITOR.key.bind("music-back", "Alt+N", () => {
+    COMPOSITOR.process.spawn({ command: "mpc seek -5" });
+  });
+  COMPOSITOR.key.bind("music-far-back", "Alt+Shift+N", () => {
+    COMPOSITOR.process.spawn({ command: "mpc seek -10" });
+  });
+  COMPOSITOR.key.bind("music-forward", "Alt+M", () => {
+    COMPOSITOR.process.spawn({ command: "mpc seek +5" });
+  });
+  COMPOSITOR.key.bind("music-far-forward", "Alt+Shift+M", () => {
+    COMPOSITOR.process.spawn({ command: "mpc seek +10" });
   });
 
   let fpsCounter = false;
