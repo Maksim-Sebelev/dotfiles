@@ -11,9 +11,6 @@ import {
   Bar,
 } from "./visual-effects/bar";
 import {
-  WindowSwitcherStyle  
-} from "./system/wm-config"
-import {
   ScreenLocker
 } from "./system/startup"
 import {
@@ -30,6 +27,8 @@ export enum Preset {
   Slavya_lake_rain_1,
   Slavya_winter_1, // for different wallpapers
   Slavya_winter_2, // ^^^^^^^^^^^^^^^^^^^^^^^^
+  Slavya_winter_3, // ^^^^^^^^^^^^^^^^^^^^^^^^
+  Slavya_winter_4, // ^^^^^^^^^^^^^^^^^^^^^^^^
   // Ulya
   Ulya_summer_1,
   Ulya_winter_1, // with blur
@@ -45,7 +44,8 @@ export enum Preset {
   PowerSaver, // no effects
 };
 
-const screenLocker = ScreenLocker.gtklock;
+// choose your own, if u r not using my nixos setup with custom screenlocker
+const screenLocker = ScreenLocker.custom;
 
 export function getConfig(preset: Preset): GlobalConfig {
   switch (preset) {
@@ -75,6 +75,12 @@ export function getConfig(preset: Preset): GlobalConfig {
         popup: PopupAnimation.Nothing,
         screenLocker: screenLocker,
       }
+
+    case Preset.Slavya_winter_3:
+      return getConfig(Preset.Slavya_winter_1);
+
+    case Preset.Slavya_winter_4:
+      return getConfig(Preset.Slavya_winter_2);
 
     case Preset.Ulya_winter_1:
       return {
@@ -159,6 +165,7 @@ export function getConfig(preset: Preset): GlobalConfig {
     background: BackgroundAnimation.Snow_with_blur_1,
     terminalBackground: TerminalBackgroundAnimation.Rain_3,
     popup: PopupAnimation.Nothing,
+    screenLocker: screenLocker,
   }
 }
 

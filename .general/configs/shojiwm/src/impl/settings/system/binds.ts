@@ -13,6 +13,13 @@ function bindScreenLocker(config: GlobalConfig) {
         });
       });
       break;
+    case ScreenLocker.custom:
+      COMPOSITOR.key.bind("screenlocker", "Super+grave", () => {
+        COMPOSITOR.process.spawn({
+          command: ['lock-screen']
+        });
+      });
+      break;
     case ScreenLocker.swaylock:
       console.error(`[screenlocker-binding]: swaylock not implemented now`)
       break;

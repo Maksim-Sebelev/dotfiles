@@ -11,6 +11,7 @@ enum ScreenLocker {
   gtklock,
   swaylock,
   Nothing,
+  custom, // in my case, it's just a nixos wrapped gtklock with modified name
 };
 
 function initScreenLockerAtStartup(config: GlobalConfig) {
@@ -26,13 +27,21 @@ function initScreenLockerAtStartup(config: GlobalConfig) {
       command: ['gtklock', '--daemonize']
     });
     break;
+
+  case ScreenLocker.custom:
+    COMPOSITOR.process.once('locker', {
+      command: ['lock-screen']
+    });
+    break;
+
   case ScreenLocker.swaylock:
     console.error(`[screenlocker]: swaylock not imlemented now`)
     break;
+
   default:
     console.error(`[screenlocker]: undefined screenlocker requested`)
+    break;
   }
-
 }
 
 
@@ -65,6 +74,7 @@ function launchOnWorkspace(
 
 export function initStartup(config: GlobalConfig) {
   initScreenLockerAtStartup(config);
+
   COMPOSITOR.process.once("fcitx5", {
     command: "fcitx5 -d",
     runPolicy: "once-per-session",
