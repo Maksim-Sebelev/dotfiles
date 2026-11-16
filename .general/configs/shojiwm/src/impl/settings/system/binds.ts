@@ -42,7 +42,7 @@ export function initBinds(
   bindScreenLocker(config);
 
   COMPOSITOR.key.bind("terminal", "Super+Q", () => {
-    COMPOSITOR.process.spawn({ command: ["kitty"] });
+    COMPOSITOR.process.spawn({ command: "kitty" });
   });
 
   COMPOSITOR.key.bind("file-picker", "Super+E", () => {
@@ -63,25 +63,13 @@ export function initBinds(
 
   COMPOSITOR.key.bind("screenshot-region-save", "Alt+Print", () => {
     COMPOSITOR.process.spawn({
-      command: "grim -g \"$(slurp)\" \"~/Pictures/Screenshots/$(get-date-in-one-string)\"",
+      command: "grim -g \"$(slurp)\" \"~/Pictures/Screenshots/$(get-date-in-one-string).png\"",
     });
   });
 
   COMPOSITOR.key.bind("screenshot-full-save", "Alt+Shift+Print", () => {
     COMPOSITOR.process.spawn({
-      command: "grim \"~/Pictures/Screenshots/$(get-date-in-one-string)\"",
-    });
-  });
-
-  COMPOSITOR.key.bind("screenshot-save", "Print", () => {
-    COMPOSITOR.process.spawn({
-      command: "grim | wl-copy",
-    });
-  });
-
-  COMPOSITOR.key.bind("screenshot-save", "Alt+Print", () => {
-    COMPOSITOR.process.spawn({
-      command: "hyprshot -s -z -m region -m active",
+      command: "grim \"~/Pictures/Screenshots/$(get-date-in-one-string).png\"",
     });
   });
 
@@ -174,16 +162,16 @@ export function initBinds(
   });
 
   COMPOSITOR.key.bind("volume-up", "XF86AudioRaiseVolume", () => {
-    COMPOSITOR.process.spawn({ command: "volume-up 5" });
+    COMPOSITOR.process.spawn({ command: "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+" });
   });
   COMPOSITOR.key.bind("volume-down", "xf86audiolowervolume", () => {
-    COMPOSITOR.process.spawn({ command: "volume-down 5" });
+    COMPOSITOR.process.spawn({ command: "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-" });
   });
   COMPOSITOR.key.bind("volume-mute", "xf86audiomute", () => {
-    COMPOSITOR.process.spawn({ command: "volume-toggle" });
+    COMPOSITOR.process.spawn({ command: "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle" });
   });
   COMPOSITOR.key.bind("microphone-mute", "XF86AudioMicMute", () => {
-    COMPOSITOR.process.spawn({ command: "microphone-toggle" });
+    COMPOSITOR.process.spawn({ command: "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle" });
   });
 
   COMPOSITOR.key.bind("brightness-up", "XF86MonBrightnessUp", () => {

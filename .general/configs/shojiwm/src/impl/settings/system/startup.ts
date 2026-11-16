@@ -77,7 +77,7 @@ export function initStartup(config: GlobalConfig) {
   initScreenLockerAtStartup(config);
 
   COMPOSITOR.process.once("microphone-startup-off", {
-    command: "microphone-off",
+    command: "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ 1",
     runPolicy: "once-per-session",
   });
 
