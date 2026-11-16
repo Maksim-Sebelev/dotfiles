@@ -17,8 +17,8 @@ import {
   type GlobalConfig
 } from "./global-config"
 
-// const AllowHardEffects = true;
-const AllowHardEffects = false;
+const AllowHardEffects = true;
+// const AllowHardEffects = false;
 
 // please add _n at the end of every enum,
 // because of ability to add other versions
@@ -28,10 +28,10 @@ const AllowHardEffects = false;
 export enum Preset {
   // Slavya
   Slavya_lake_rain_1,
-  Slavya_winter_1, // for different wallpapers
-  Slavya_winter_2, // ^^^^^^^^^^^^^^^^^^^^^^^^
-  Slavya_winter_3, // ^^^^^^^^^^^^^^^^^^^^^^^^
-  Slavya_winter_4, // ^^^^^^^^^^^^^^^^^^^^^^^^
+  Slavya_winter_1, // with blur
+  Slavya_winter_2, // without blur
+  Slavya_winter_3, // with blur
+  Slavya_winter_4, // without blur
   // Ulya
   Ulya_summer_1,
   Ulya_winter_1, // with blur
@@ -40,11 +40,14 @@ export enum Preset {
   Lena,
   // Alisa
   Alisa_winter_1,
+  A,
   // Miky
   Miku_from_bus_1,
   // Other
   RainyBubbles_1,
   PowerSaver, // no effects
+  Night_city_1,
+  Night_city_2,
 };
 
 // choose your own, if u r not using my nixos setup with custom screenlocker
@@ -88,7 +91,7 @@ export function getConfig(preset: Preset): GlobalConfig {
     case Preset.Ulya_winter_1:
       return {
         bar: Bar.ShojiBar2,
-        background: AllowHardEffects ? BackgroundAnimation.Snow_with_blur_4 : BackgroundAnimation.Snow_with_blur_4,
+        background: AllowHardEffects ? BackgroundAnimation.Snow_with_blur_1 : BackgroundAnimation.Snow_with_blur_4,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
         screenLocker: screenLocker,
@@ -97,7 +100,7 @@ export function getConfig(preset: Preset): GlobalConfig {
     case Preset.Ulya_winter_2:
       return {
         bar: Bar.ShojiBar2,
-        background: AllowHardEffects ? BackgroundAnimation.Snow_without_blur_4 : BackgroundAnimation.Snow_without_blur_4,
+        background: AllowHardEffects ? BackgroundAnimation.Snow_without_blur_1 : BackgroundAnimation.Snow_without_blur_4,
         terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
         screenLocker: screenLocker,
@@ -121,6 +124,7 @@ export function getConfig(preset: Preset): GlobalConfig {
         screenLocker: screenLocker,
       }
 
+    case Preset.A:
     case Preset.Alisa_winter_1:
       return {
         bar: Bar.ShojiBar2,
@@ -130,11 +134,30 @@ export function getConfig(preset: Preset): GlobalConfig {
         screenLocker: screenLocker,
       }
 
+
     case Preset.RainyBubbles_1:
       return {
         bar: Bar.ShojiBar2,
         background: BackgroundAnimation.Bubbles,
         terminalBackground: TerminalBackgroundAnimation.Rain_1,
+        popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
+      }
+
+    case Preset.Night_city_1:
+      return {
+        bar: Bar.ShojiBar2,
+        background: AllowHardEffects ? BackgroundAnimation.Snow_without_blur_2 : BackgroundAnimation.Snow_without_blur_4,
+        terminalBackground: TerminalBackgroundAnimation.Nothing,
+        popup: PopupAnimation.Nothing,
+        screenLocker: screenLocker,
+      }
+
+    case Preset.Night_city_2:
+      return {
+        bar: Bar.ShojiBar2,
+        background: BackgroundAnimation.Nothing,
+        terminalBackground: TerminalBackgroundAnimation.Nothing,
         popup: PopupAnimation.Nothing,
         screenLocker: screenLocker,
       }
