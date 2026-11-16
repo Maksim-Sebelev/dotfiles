@@ -12,7 +12,7 @@ args = [
     "--background-index",
     "--clang-tidy",
     "--completion-style=detailed",
-    # "--header-insertion=iwyu",
+    "--header-insertion=iwyu",
     "--pch-storage=memory",
     "--log=verbose",
     "--experimental-modules-support",
@@ -41,6 +41,15 @@ file-types = ["ll"]
 comment-token = ";"
 indent = { tab-width = 2, unit = "  " }
 injection-regex = "llvm"
+
+[[language]]
+name = "nix"
+language-servers = ["nixd"]
+auto-format = true
+formatter = { command = "nixfmt" } # Или alejandra, если используете его
+
+[language-server.nixd]
+command = "nixd"
 
 [[grammar]]
 name = "llvm"
