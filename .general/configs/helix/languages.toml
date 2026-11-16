@@ -12,12 +12,12 @@ args = [
     "--background-index",
     "--clang-tidy",
     "--completion-style=detailed",
-    "--header-insertion=iwyu",
+    # "--header-insertion=iwyu",
     "--pch-storage=memory",
     "--log=verbose",
-    "--experimental-modules-support"
-    # "--compile-commands-dir=build",
-    # "--query-driver=/nix/store/*/bin/clang++"
+    "--experimental-modules-support",
+    "--compile-commands-dir=build",
+    "--query-driver=/nix/store/*/bin/clang++"
 ]
 
 

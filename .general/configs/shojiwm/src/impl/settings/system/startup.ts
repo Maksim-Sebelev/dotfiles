@@ -98,6 +98,7 @@ export function initStartup(config: GlobalConfig) {
   launchOnWorkspace("Terminal-at-startup-1", "kitty --class kitty-1", 1, "kitty-1", true);
   launchOnWorkspace("Terminal-at-startup-2", "kitty --class kitty-2", 2, "kitty-2", true);
   launchOnWorkspace("ncmpcpp-at-start", "kitty --class kitty-ncmpcpp ncmpcpp", 9, "kitty-ncmpcpp");
+  launchOnWorkspace("btop-at-start", "kitty --class kitty-btop btop", 10, "kitty-btop");
 }
 
 const MOVED_STARTUP_WINDOWS = new Set<string>();

@@ -45,24 +45,37 @@ export function initBinds(
     COMPOSITOR.process.spawn({ command: ["kitty"] });
   });
 
-  COMPOSITOR.key.bind("browser", "Super+B", () => {
-    COMPOSITOR.process.spawn({ command: ["firefox"] });
-  });
-
-  COMPOSITOR.key.bind("discord", "Super+D", () => {
-    COMPOSITOR.process.spawn({
-      command:
-        "discordptb",
-    });
-  });
-
-  COMPOSITOR.key.bind("dolphin", "Super+E", () => {
+  COMPOSITOR.key.bind("file-picker", "Super+E", () => {
     COMPOSITOR.process.spawn({ command: "kitty yazi" });
   });
 
-  COMPOSITOR.key.bind("screenshot-clipboard", "Print", () => {
+  COMPOSITOR.key.bind("screenshot-region-clipboard", "Print", () => {
     COMPOSITOR.process.spawn({
-      command: "hyprshot -s -z -m region -m active --clipboard-only",
+      command: "grim -g \"$(slurp)\" - | wl-copy",
+    });
+  });
+
+  COMPOSITOR.key.bind("screenshot-full-clipboard", "Shift+Print", () => {
+    COMPOSITOR.process.spawn({
+      command: "grim - | wl-copy",
+    });
+  });
+
+  COMPOSITOR.key.bind("screenshot-region-save", "Alt+Print", () => {
+    COMPOSITOR.process.spawn({
+      command: "grim -g \"$(slurp)\" \"~/Pictures/Screenshots/$(get-date-in-one-string)\"",
+    });
+  });
+
+  COMPOSITOR.key.bind("screenshot-full-save", "Alt+Shift+Print", () => {
+    COMPOSITOR.process.spawn({
+      command: "grim \"~/Pictures/Screenshots/$(get-date-in-one-string)\"",
+    });
+  });
+
+  COMPOSITOR.key.bind("screenshot-save", "Print", () => {
+    COMPOSITOR.process.spawn({
+      command: "grim | wl-copy",
     });
   });
 
@@ -70,20 +83,6 @@ export function initBinds(
     COMPOSITOR.process.spawn({
       command: "hyprshot -s -z -m region -m active",
     });
-  });
-
-  COMPOSITOR.key.bind("record-screen", "Shift+Print", () => {
-    // toggleRecording();
-    COMPOSITOR.process.spawn({
-      command: "record-screen",
-    });
-  });
-
-  COMPOSITOR.key.bind("stop-record-screen", "Alt+S", () => {
-    COMPOSITOR.process.spawn({
-      command: "stop-screen-recording",
-    });
-    // toggleRecording();
   });
 
   function toggleStartMenu() {
